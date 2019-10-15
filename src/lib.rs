@@ -17,8 +17,10 @@ impl<T> Permutation<T> where
     TryFrom<usize> +
     PartialEq<T> +
     rand::distributions::range::SampleRange +
-    std::cmp::PartialOrd
-    
+    std::cmp::PartialOrd +
+    std::ops::Sub +
+    std::fmt::Display + // NOTE : For debugging
+    std::fmt::Debug // NOTE : For debugging
 {
     /// Initializes a Permutation with the given vector. If the 
     /// given vector is not a permutation the function will return an Error. 
@@ -58,9 +60,21 @@ impl<T> Permutation<T> where
         Permutation { permu : vec }
     }
 
+    /// Generates a random permutation of the length given.
+    ///
+    /// # Panics
+    /// If the length given is grater than the maximum value that `T` can hold,
+    /// the method will panic.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::Permutation;
+    /// let rand_permu : Permutation<u16> = Permutation::random(8);
+    /// assert!(rand_permu.is_permu());
+    /// assert_eq!(8, rand_permu.permu.len());
+    /// ```
     pub fn random(length: usize) -> Permutation<T> {
         let mut permu: Vec<T> = Vec::with_capacity(length);
-        let mut count = 0;
 
         let zero = match Self::zero() {
             Ok(z) => z,
@@ -69,16 +83,15 @@ impl<T> Permutation<T> where
 
         let max = match T::try_from(length) {
             Ok(v) => v,
-            Err(_) => panic!("kok"),
+            Err(_) => panic!("Can not create a permutation longer than the max size of the its type"),
         };
-        
-        while count != length - 1{  
+
+        while permu.len() < length {  
             // Generate random number. n : [0, length)
             let n = rand::thread_rng().gen_range(zero, max);
 
-            if Self::find_unsec_asref(&permu, n) {
-                permu[count] = n;
-                count += 1;
+            if !Self::find_unsec_asref(&permu, n) {
+                permu.push(n);
             }
         }
         Permutation{ permu : permu }
@@ -193,8 +206,30 @@ impl<T> Permutation<T> where
 
 #[cfg(test)]
 mod tests {
+
+    use crate::Permutation;
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn find_unsec_asref() {
+        let v = vec![1,2,3];
+        v.iter().for_each(|x| assert!(
+                Permutation::find_unsec_asref(&v, *x)));
+    }
+
+    #[test]
+    fn find_unsec_asref2() {
+        let mut v : Vec<u32> = Vec::with_capacity(5);
+        assert!(!Permutation::find_unsec_asref(&v, 3));
+        
+        v.push(3);
+        assert!(Permutation::find_unsec_asref(&v, 3));
+    }
+
+    #[test]
+    fn generate_rand_permus() {
+        for _i in 0..1000 {
+            let permu : Permutation<u8> = Permutation::random(40);
+            assert!(permu.is_permu());
+        }
     }
 }
