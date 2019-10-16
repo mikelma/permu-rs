@@ -200,7 +200,7 @@ impl<T> Permutation<T> where
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_permu {
 
     use crate::Permutation;
 
