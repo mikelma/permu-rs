@@ -1,6 +1,6 @@
 [package]
 name = "permu-rs"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["mikelma <mikelma7@gmail.com>"]
 edition = "2018"
 description = "A collection of utilities for permutations. It contains useful tools to create, manage and experiment with permutations."
