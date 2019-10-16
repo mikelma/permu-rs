@@ -1,37 +1,37 @@
 use std::convert::TryFrom;
 use rand::Rng;
+use std::fmt::{Debug, Display};
 
-/// Permutation struct. Contains a permutation vector.
+/// Contains a permutation vector methods to generate permutations.
+#[derive(Debug)]
 pub struct Permutation<T> {
     pub permu : Vec<T>,
 }
 
 impl<T> Permutation<T> where 
     T : Copy +
-    TryFrom<u8> +
+    From<u8> +
     TryFrom<usize> +
     PartialEq<T> +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    std::fmt::Display + // NOTE : For debugging
-    std::fmt::Debug // NOTE : For debugging
+    Display + // NOTE : For debugging
+    Debug // NOTE : For debugging
 {
-    /// Initializes a Permutation with the given vector. If the 
-    /// given vector is not a permutation the function will return an Error. 
+    
+    /// Initializes a Permutation with the given vector. 
+    ///
+    /// # Errors
+    /// If the given vector is not a permutation the function will return an Error. 
     ///
     /// # Example
     /// ```
-    /// use permu_rs::Permutation;
+    /// use permu_rs::permutation::Permutation;
     /// let vec : Vec<u16> = vec![0,1,2,3,4];
     /// let permu = Permutation::from_vec(vec);
     /// ```
     pub fn from_vec(vec: Vec<T>) -> Result<Permutation<T>, & 'static str> {
-        /*
-        let identity = Self::identity(vec.len())?;
-        let is_permu = identity.permu.iter() 
-            .all(|i| vec.iter().fold(0, |acc, x| usize::from(*x == *i)) == 1);
-        */
         let permu = Permutation {permu : vec};
         
         match permu.is_permu() {
@@ -41,13 +41,13 @@ impl<T> Permutation<T> where
     }
 
     /// Initializes a Permutation with the given vector.
-    /// No checking is done to the given permutation, the
+    /// No checking is done to the given vector, the
     /// permutation can be initialized with a vector that 
-    /// is not a real permutation. It is faster than `from_vec`.
+    /// is not a permutation.
     /// 
     /// # Example
     /// ```
-    /// use permu_rs::Permutation;
+    /// use permu_rs::permutation::Permutation;
     /// let vec : Vec<u16> = vec![0,1,2,3,4];
     /// let permu : Permutation<u16> = Permutation::from_vec_unsec(vec);
     /// ```
@@ -63,19 +63,16 @@ impl<T> Permutation<T> where
     ///
     /// # Example
     /// ```
-    /// use permu_rs::Permutation;
+    /// use permu_rs::permutation::Permutation;
     /// let rand_permu : Permutation<u16> = Permutation::random(8);
     /// assert!(rand_permu.is_permu());
     /// assert_eq!(8, rand_permu.permu.len());
     /// ```
     pub fn random(length: usize) -> Permutation<T> {
         let mut permu: Vec<T> = Vec::with_capacity(length);
-
-        let zero = match Self::zero() {
-            Ok(z) => z,
-            Err(e) => panic!(e),
-        };
-
+        
+        let zero = T::from(0u8);
+        
         let max = match T::try_from(length) {
             Ok(v) => v,
             Err(_) => panic!("Can not create a permutation longer than the max size of the its type"),
@@ -85,105 +82,48 @@ impl<T> Permutation<T> where
             // Generate random number. n : [0, length)
             let n = rand::thread_rng().gen_range(zero, max);
 
-            if !Self::find_unsec_asref(&permu, n) {
+            if !Self::contains(&permu, n) {
                 permu.push(n);
             }
         }
         Permutation{ permu : permu }
     }
-
-    // Returns zero value of type T
-    fn zero() -> Result<T, & 'static str> {
-        match T::try_from(0usize) {
-            Ok(v) => Ok(v),
-            Err(_) => Err("Zero conversion error"),
-        }
-    }
     
     /// Returns an identity vector of the length given.
     ///
+    /// # Errors
+    /// If the length given is grater than the maximum value T can hold,
+    /// it will return an error.
+    ///
     /// # Example
     /// ```
-    /// use permu_rs::Permutation;
+    /// use permu_rs::permutation::Permutation;
     /// let identity : Permutation<u8> = Permutation::identity(5).unwrap();
     /// assert_eq!(vec![0,1,2,3,4], identity.permu);
     /// ```
     pub fn identity(length: usize) -> Result<Permutation<T>, & 'static str> {
-        let mut identity: Vec<T> = vec![Self::zero().unwrap();length];
+        let mut identity: Vec<T> = Vec::new();
 
         for i in 0..length  {
-            identity[i] = match T::try_from(i) {
+            identity.push(match T::try_from(i) {
                 Ok(v) => v,
                 Err(_) => return Err("Conversion error"),
-            }; 
+            });
         }
         Ok(Permutation { permu : identity })
     }
-    
-    /// Finds an element inside the permutation. 
-    /// The type of the value to find is `usize`, so if its value is
-    /// greater than `T::MAX_VALUE` or lower than `T::MIN_VALUE` the method
-    /// return an an error. If boundaries were satisfied, the method 
-    /// returns true if the element is found, if not, returns false.
-    /// 
-    /// # Example
-    /// ```
-    /// use permu_rs::Permutation;
-    /// let permu : Permutation<u8> = Permutation::from_vec(vec![0,1,2,3]).unwrap();
-    /// assert_eq!(Ok(true), permu.find(2));
-    /// assert_eq!(Ok(false),permu.find(7));
-    /// ```
-    pub fn find(&self, item: usize) -> Result<bool, &'static str> {
-        let v = match T::try_from(item) {
-            Ok(v) => v,
-            Err(_) => return Err("Conversion error"),
-        };
-        Ok(self.permu.iter().any(|&x| x == v))
-    }
 
-    /// Finds an element inside the permutation. 
-    ///
-    /// # Panics
-    /// The type of the value to find is `usize`, so if its value is
-    /// greater than `T::MAX_VALUE` or lower than `T::MIN_VALUE` the method
-    /// will panic.
-    /// 
-    /// # Example
-    /// ```
-    /// use permu_rs::Permutation;
-    /// let permu : Permutation<u8> = Permutation::from_vec(vec![0,1,2,3]).unwrap();
-    /// assert_eq!(Ok(true), permu.find(2));
-    /// assert_eq!(Ok(false),permu.find(7));
-    /// ```
-    pub fn find_unsec(&self, item: usize) -> bool {
-        let v = match T::try_from(item) {
-            Ok(v) => v,
-            Err(_) => panic!("Conversion error"),
-        };
-        self.permu.iter().any(|&x| x == v)
-    }
-    
-    // Private implementation of find_unsec function.
-    // Takes a permutation and an item to find.
-    // WARNING: As find_unsec method, this function can panic.
-    fn find_unsec_asref(permu: &Vec<T>, item: T) -> bool {
-        let v = match T::try_from(item) {
-            Ok(v) => v,
-            Err(_) => panic!("Conversion error"),
-        };
-        permu.iter().any(|&x| x == v)
+    /// Checks if the give `Permutation` contains an element inside.
+    /// If the element is inside `Permutation` returns true.
+    fn contains(permu: &Vec<T>, item: T) -> bool {
+        permu.iter().any(|&x| x == item)
     }
     
     /// Checks if the vector inside `Permutation` is really a permutation.
     ///
-    /// # Panics
-    /// This method internally uses `find_unsec` method, and this method can panic.
-    /// However, this method will never panic as it always request to find values that are 
-    /// inside the range T::MIN_VALUE and T::MAX_VALUE.
-    ///
     /// # Example
     /// ```
-    /// use permu_rs::Permutation;
+    /// use permu_rs::permutation::Permutation;
     /// let permu1 : Permutation<u8> = Permutation::from_vec_unsec(vec![0,1,2,3]);
     /// let permu2 : Permutation<u8> = Permutation::from_vec_unsec(vec![1,2,3]);
     /// let permu3 : Permutation<u8> = Permutation::from_vec_unsec(vec![0,1,4,3]);
@@ -195,31 +135,25 @@ impl<T> Permutation<T> where
     /// assert!(!permu4.is_permu()); // Not permutation
     /// ```
     pub fn is_permu(&self) -> bool {
-        (0..self.permu.len()).all(|i| self.find_unsec(i))
+        (0..self.permu.len()).all(|i| {
+            // NOTE:
+            // This will never panic as the boundaries of the 
+            // type T will always be respected here. 
+            // i : [0, permu.len] <= T.max_value()
+            let elem = match T::try_from(i) {
+                Ok(v) => v, 
+                Err(_) => panic!("Length conversion failed"),
+            };
+            Self::contains(&self.permu, elem)
+        })
     }
 }
 
 #[cfg(test)]
 mod tests_permu {
 
-    use crate::Permutation;
-
-    #[test]
-    fn find_unsec_asref() {
-        let v = vec![1,2,3];
-        v.iter().for_each(|x| assert!(
-                Permutation::find_unsec_asref(&v, *x)));
-    }
-
-    #[test]
-    fn find_unsec_asref2() {
-        let mut v : Vec<u32> = Vec::with_capacity(5);
-        assert!(!Permutation::find_unsec_asref(&v, 3));
-        
-        v.push(3);
-        assert!(Permutation::find_unsec_asref(&v, 3));
-    }
-
+    use crate::permutation::Permutation;
+    
     #[test]
     fn generate_rand_permus() {
         for _i in 0..1000 {
@@ -227,4 +161,46 @@ mod tests_permu {
             assert!(permu.is_permu());
         }
     }
+}
+
+pub struct Population<T> {
+    pub population : Vec<Permutation<T>>,
+    pub size : usize,
+    pub zero : Option<T>,
+}
+
+impl<T> Population<T> where 
+    T : Copy +
+    From<u8> +
+    TryFrom<usize> +
+    PartialEq<T> +
+    rand::distributions::range::SampleRange +
+    std::cmp::PartialOrd +
+    std::ops::Sub +
+    Display + // NOTE : For debugging
+    Debug // NOTE : For debugging
+{
+
+    /// Returns a `Population` of the size given with `Permutations` filled with zeros . 
+    /// The permutation's length must be specified. 
+    ///
+    /// # Panics
+    /// Internally converts `0usize` to 
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::Population;
+    /// // Creates a population of 10 permutations with length 20
+    /// let pop : Population<u8> = Population::zeros(10, 20);
+    /// ```
+    pub fn zeros(size: usize, length: usize) -> Population<T> {
+        let zero = T::from(0u8);
+        let zeros = vec![zero;length];
+
+        let mut pop : Vec<Permutation<T>> = Vec::new(); 
+
+        (0..size).for_each(|_| pop.push(Permutation::from_vec_unsec(zeros.clone())));
+
+        Population {population: pop, size : size, zero : Some(zero)}
+    }    
 }
