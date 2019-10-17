@@ -2,6 +2,8 @@ use std::convert::TryFrom;
 use rand::Rng;
 use std::fmt::{Debug, Display};
 
+use crate::{Learnable, Sampleable};
+
 /// Contains a permutation vector methods to generate permutations.
 #[derive(Debug)]
 pub struct Permutation<T> {
@@ -166,7 +168,6 @@ mod tests_permu {
 pub struct Population<T> {
     pub population : Vec<Permutation<T>>,
     pub size : usize,
-    pub zero : Option<T>,
 }
 
 impl<T> Population<T> where 
@@ -201,6 +202,34 @@ impl<T> Population<T> where
 
         (0..size).for_each(|_| pop.push(Permutation::from_vec_unsec(zeros.clone())));
 
-        Population {population: pop, size : size, zero : Some(zero)}
+        Population {population: pop, size : size}
     }    
+    
+    /// Initializes a `Population` of random `Permutations` of the size and length given.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::Population;
+    /// let pop : Population<u8> = Population::random(10, 5);
+    /// pop.population.iter().for_each(|p| assert!(p.is_permu())); // All permutations
+    /// assert_eq!(pop.size, pop.population.len()); // Population size check
+    /// ```
+    pub fn random(size: usize, length: usize) -> Population<T> {
+        let mut pop : Vec<Permutation<T>> = Vec::with_capacity(size);   // Initialize
+        (0..size).for_each(|_| pop.push(Permutation::random(length)) ); // Generate
+        Population { population : pop, size}
+    }
 }
+
+/// Probability distribution for permutation populations.
+pub struct Distribution {
+    distribution : Vec<Vec<usize>>
+}
+
+/// Implementation for trait `Sampleable`.
+impl Sampleable for Distribution {
+    fn sample(&self, pop: &mut dyn Learnable) -> Result<(), &'static str> {
+        Ok(())
+    }
+}
+
