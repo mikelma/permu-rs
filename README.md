@@ -7,8 +7,8 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-permu-rs = "0.1.0"
+permu-rs = "0.1.2"
 ```
 
-To get started using permu-rs, see [the documentation](https://docs.rs/permu-rs/0.1.0/permu_rs/).
+To get started using permu-rs, see [the documentation](https://docs.rs/permu-rs/0.1.2/permu_rs/).
 
