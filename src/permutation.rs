@@ -269,15 +269,15 @@ impl<T> PermuPopulation<T> where
         
         let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
 
-        for i in 0..self.size {                             // For each permutation in population
-            for j in 0..self.population[0].permu.len() {    // For each position in a permutation
+        (0..self.size).for_each(|i| {
+            (0..self.population[0].permu.len()).for_each(|j| {
                 let e : usize = match self.population[i].permu[j].try_into() {
                     Ok(v) => v,
                     Err(_) => panic!(),
                 }; 
                 distr[e][j] += 1;
-            }
-        }
+            })
+        });
         PermuDistribution { distribution : distr , soften : false }
     }
 }
