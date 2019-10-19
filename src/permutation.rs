@@ -170,8 +170,8 @@ mod tests_permu {
 
 /// Probability distribution for permutation populations.
 pub struct PermuDistribution {
-    distribution : Vec<Vec<usize>>,
-    soften : bool,
+    pub distribution : Vec<Vec<usize>>,
+    pub soften : bool,
 }
 
 /// Population of `Permutations`.
@@ -249,18 +249,26 @@ impl<T> PermuPopulation<T> where
     ///
     /// # Example
     /// ```
-    /// use permu_rs::permutation::PermuPopulation;
-    /// let pop = PermuPopulation::<u8>::random(10, 5);
+    /// use permu_rs::permutation::{PermuPopulation, Permutation};
+    /// let v = vec![Permutation::<u8>::from_vec_unsec(vec![0,1,2,3]),
+    ///              Permutation::<u8>::from_vec_unsec(vec![1,2,0,3])];
+    /// let pop = PermuPopulation::from_vec(v); 
     /// let distr = pop.learn();
+    ///
+    /// let target = vec![vec![1,0,1,0],
+    ///                   vec![1,1,0,0],
+    ///                   vec![0,1,1,0],
+    ///                   vec![0,0,0,2]];
+    /// assert_eq!(target, distr.distribution);
     /// ```
     ///
-    // NOTE: (i : positions, j : values)
+    // NOTE: (i : values, j : positions)
     // NOTE: TO OPTIMIZE!
-    pub fn learn(&self) -> PermuDistribution{ 
+    pub fn learn(&self) -> PermuDistribution { 
         let m = self.population[0].permu.len(); // Number of positions
         
         let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
-        
+
         for i in 0..self.size {                             // For each permutation in population
             for j in 0..self.population[0].permu.len() {    // For each position in a permutation
                 let e : usize = match self.population[i].permu[j].try_into() {
