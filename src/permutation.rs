@@ -192,6 +192,20 @@ impl<T> PermuPopulation<T> where
     Display + // NOTE : For debugging
     Debug, // NOTE : For debugging
 {
+    /// Returns a `PermuPopulation` created from a vector of `Permutation`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::{Permutation, PermuPopulation};
+    /// let vec = vec![Permutation::identity(5),
+    ///                Permutation::random(5)];
+    /// let pop = PermuPopulation::<u8>::from_vec(vec);
+    /// assert_eq!(2, pop.size);
+    /// ```
+    pub fn from_vec(vec: Vec<Permutation<T>>) -> PermuPopulation<T> {
+        let size = vec.len();
+        PermuPopulation {population : vec, size : size} 
+    }
 
     /// Returns a `PermuPopulation` of the size given with `Permutations` filled with zeros . 
     /// The permutation's length must be specified. 
@@ -241,11 +255,12 @@ impl<T> PermuPopulation<T> where
     /// ```
     ///
     // NOTE: (i : positions, j : values)
+    // NOTE: TO OPTIMIZE!
     pub fn learn(&self) -> PermuDistribution{ 
         let m = self.population[0].permu.len(); // Number of positions
         
         let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
-
+        
         for i in 0..self.size {                             // For each permutation in population
             for j in 0..self.population[0].permu.len() {    // For each position in a permutation
                 let e : usize = match self.population[i].permu[j].try_into() {
@@ -288,14 +303,12 @@ mod test_learn {
     #[test]
     fn test() {
         let pop = PermuPopulation::<u8>::random(10, 5);
-        // pop.population.iter().for_each(|p| println!("{:?}", p.permu));
+        pop.population.iter().for_each(|p| println!("{:?}", p.permu));
 
         let mut samples = PermuPopulation::<u8>::zeros(10, 5);
 
         pop.sample(&mut samples).unwrap();
-        // println!("");
-        // println!("{:?}", samples.size);
-        // samples.population.iter().for_each(|p| println!("{:?}", p.permu));
+        samples.population.iter().for_each(|p| println!("{:?}", p.permu));
         // panic!();
     }
 }
