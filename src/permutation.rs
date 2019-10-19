@@ -1,8 +1,10 @@
 use std::convert::TryFrom;
-use rand::Rng;
+use std::convert::TryInto;
 use std::fmt::{Debug, Display};
 
-use crate::{Learnable, Sampleable};
+use rand::Rng;
+
+use crate::Population;
 
 /// Contains a permutation vector methods to generate permutations.
 #[derive(Debug)]
@@ -14,12 +16,13 @@ impl<T> Permutation<T> where
     T : Copy +
     From<u8> +
     TryFrom<usize> +
+    TryInto<usize> +
     PartialEq<T> +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
     Display + // NOTE : For debugging
-    Debug // NOTE : For debugging
+    Debug, // NOTE : For debugging
 {
     
     /// Initializes a Permutation with the given vector. 
@@ -93,26 +96,26 @@ impl<T> Permutation<T> where
     
     /// Returns an identity vector of the length given.
     ///
-    /// # Errors
-    /// If the length given is grater than the maximum value T can hold,
-    /// it will return an error.
+    /// # Panics
+    /// If the length given is grater than the maximum value that `T` can hold,
+    /// the method will panic.
     ///
     /// # Example
     /// ```
     /// use permu_rs::permutation::Permutation;
-    /// let identity : Permutation<u8> = Permutation::identity(5).unwrap();
+    /// let identity : Permutation<u8> = Permutation::identity(5);
     /// assert_eq!(vec![0,1,2,3,4], identity.permu);
     /// ```
-    pub fn identity(length: usize) -> Result<Permutation<T>, & 'static str> {
+    pub fn identity(length: usize) -> Permutation<T> {
         let mut identity: Vec<T> = Vec::new();
 
         for i in 0..length  {
             identity.push(match T::try_from(i) {
                 Ok(v) => v,
-                Err(_) => return Err("Conversion error"),
+                Err(_) => panic!("Can not create a permutation longer than the max size of the its type"),
             });
         }
-        Ok(Permutation { permu : identity })
+        Permutation { permu : identity }
     }
 
     /// Checks if the give `Permutation` contains an element inside.
@@ -165,24 +168,32 @@ mod tests_permu {
     }
 }
 
-pub struct Population<T> {
+/// Probability distribution for permutation populations.
+pub struct PermuDistribution {
+    distribution : Vec<Vec<usize>>,
+    soften : bool,
+}
+
+/// Population of `Permutations`.
+pub struct PermuPopulation<T> {
     pub population : Vec<Permutation<T>>,
     pub size : usize,
 }
 
-impl<T> Population<T> where 
+impl<T> PermuPopulation<T> where 
     T : Copy +
     From<u8> +
     TryFrom<usize> +
+    TryInto<usize> +
     PartialEq<T> +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
     Display + // NOTE : For debugging
-    Debug // NOTE : For debugging
+    Debug, // NOTE : For debugging
 {
 
-    /// Returns a `Population` of the size given with `Permutations` filled with zeros . 
+    /// Returns a `PermuPopulation` of the size given with `Permutations` filled with zeros . 
     /// The permutation's length must be specified. 
     ///
     /// # Panics
@@ -190,11 +201,11 @@ impl<T> Population<T> where
     ///
     /// # Example
     /// ```
-    /// use permu_rs::permutation::Population;
+    /// use permu_rs::permutation::PermuPopulation;
     /// // Creates a population of 10 permutations with length 20
-    /// let pop : Population<u8> = Population::zeros(10, 20);
+    /// let pop : PermuPopulation<u8> = PermuPopulation::zeros(10, 20);
     /// ```
-    pub fn zeros(size: usize, length: usize) -> Population<T> {
+    pub fn zeros(size: usize, length: usize) -> PermuPopulation<T> {
         let zero = T::from(0u8);
         let zeros = vec![zero;length];
 
@@ -202,34 +213,89 @@ impl<T> Population<T> where
 
         (0..size).for_each(|_| pop.push(Permutation::from_vec_unsec(zeros.clone())));
 
-        Population {population: pop, size : size}
+        PermuPopulation {population: pop, size : size}
     }    
     
-    /// Initializes a `Population` of random `Permutations` of the size and length given.
+    /// Initializes a `PermuPopulation` of random `Permutations` of the size and length given.
     ///
     /// # Example
     /// ```
-    /// use permu_rs::permutation::Population;
-    /// let pop : Population<u8> = Population::random(10, 5);
+    /// use permu_rs::permutation::PermuPopulation;
+    /// let pop : PermuPopulation<u8> = PermuPopulation::random(10, 5);
     /// pop.population.iter().for_each(|p| assert!(p.is_permu())); // All permutations
-    /// assert_eq!(pop.size, pop.population.len()); // Population size check
+    /// assert_eq!(pop.size, pop.population.len()); // PermuPopulation size check
     /// ```
-    pub fn random(size: usize, length: usize) -> Population<T> {
+    pub fn random(size: usize, length: usize) -> PermuPopulation<T> {
         let mut pop : Vec<Permutation<T>> = Vec::with_capacity(size);   // Initialize
         (0..size).for_each(|_| pop.push(Permutation::random(length)) ); // Generate
-        Population { population : pop, size}
+        PermuPopulation { population : pop, size : size}
+    }
+
+    /// Returns a probability distribution `PermuDistribution` learned from the current `PermuPopulation`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::PermuPopulation;
+    /// let pop = PermuPopulation::<u8>::random(10, 5);
+    /// let distr = pop.learn();
+    /// ```
+    ///
+    // NOTE: (i : positions, j : values)
+    pub fn learn(&self) -> PermuDistribution{ 
+        let m = self.population[0].permu.len(); // Number of positions
+        
+        let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
+
+        for i in 0..self.size {                             // For each permutation in population
+            for j in 0..self.population[0].permu.len() {    // For each position in a permutation
+                let e : usize = match self.population[i].permu[j].try_into() {
+                    Ok(v) => v,
+                    Err(_) => panic!(),
+                }; 
+                distr[e][j] += 1;
+            }
+        }
+        PermuDistribution { distribution : distr , soften : false }
     }
 }
 
-/// Probability distribution for permutation populations.
-pub struct Distribution {
-    distribution : Vec<Vec<usize>>
-}
-
 /// Implementation for trait `Sampleable`.
-impl Sampleable for Distribution {
-    fn sample(&self, pop: &mut dyn Learnable) -> Result<(), &'static str> {
+impl<T> Population for PermuPopulation<T> where 
+    T : Copy +
+    From<u8> +
+    TryFrom<usize> +
+    TryInto<usize> +
+    PartialEq<T> +
+    rand::distributions::range::SampleRange +
+    std::cmp::PartialOrd +
+    std::ops::Sub +
+    Display + // NOTE : For debugging
+    Debug, // NOTE : For debugging
+{
+
+    fn sample(&self, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
+        let distribution = self.learn();
+        out.population[0] = Permutation::identity(out.population[0].permu.len());
         Ok(())
     }
 }
 
+#[cfg(test)]
+mod test_learn {
+    use crate::permutation::PermuPopulation;
+    use crate::Population;
+
+    #[test]
+    fn test() {
+        let pop = PermuPopulation::<u8>::random(10, 5);
+        // pop.population.iter().for_each(|p| println!("{:?}", p.permu));
+
+        let mut samples = PermuPopulation::<u8>::zeros(10, 5);
+
+        pop.sample(&mut samples).unwrap();
+        // println!("");
+        // println!("{:?}", samples.size);
+        // samples.population.iter().for_each(|p| println!("{:?}", p.permu));
+        // panic!();
+    }
+}
