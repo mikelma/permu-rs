@@ -255,15 +255,14 @@ impl<T> PermuPopulation<T> where
     /// let pop = PermuPopulation::from_vec(v); 
     /// let distr = pop.learn();
     ///
-    /// let target = vec![vec![1,0,1,0],
-    ///                   vec![1,1,0,0],
+    /// let target = vec![vec![1,1,0,0],
     ///                   vec![0,1,1,0],
+    ///                   vec![1,0,1,0],
     ///                   vec![0,0,0,2]];
     /// assert_eq!(target, distr.distribution);
     /// ```
     ///
-    // NOTE: (i : values, j : positions)
-    // NOTE: TO OPTIMIZE!
+    // NOTE: (i : positions, j : values)
     pub fn learn(&self) -> PermuDistribution { 
         let m = self.population[0].permu.len(); // Number of positions
         
@@ -275,7 +274,8 @@ impl<T> PermuPopulation<T> where
                     Ok(v) => v,
                     Err(_) => panic!(),
                 }; 
-                distr[e][j] += 1;
+                // distr[e][j] += 1;
+                distr[j][e] += 1;
             })
         });
         PermuDistribution { distribution : distr , soften : false }
@@ -298,6 +298,44 @@ impl<T> Population for PermuPopulation<T> where
 
     fn sample(&self, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
         let distribution = self.learn();
+    
+        /*
+        let size = distr.len();
+        let mut sample: Vec<u16> = vec![0;size];
+        let mut used_indx: Vec<u16> = vec![];
+        
+        let order = permu_utils::random_permutation(size);
+        for j in order {
+
+            // Calculate max sum
+            let mut s_max = 0;
+            for i in 0..size {
+                if !permu_utils::is_in(i as u16, &used_indx) {
+                    s_max += distr[j as usize][i];
+                } 
+            }
+            let rand: f64 = match s_max {
+                0 => 0.0,
+                _ => rand::thread_rng().gen_range(0.0, s_max as f64),
+            };
+
+            let mut s = 0;
+            let mut i = 0;
+
+            while (s as f64) < rand {
+                if !permu_utils::is_in(i as u16, &used_indx) {
+                    s += distr[j as usize][i];
+                }
+                if (s as f64) < rand {
+                    i += 1;
+                }
+            }
+            sample[j as usize] = i as u16;
+            used_indx.push(i as u16);
+        }
+        sample
+        */
+
         out.population[0] = Permutation::identity(out.population[0].permu.len());
         Ok(())
     }
