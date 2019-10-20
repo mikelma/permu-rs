@@ -370,6 +370,5 @@ mod test_learn {
 
         pop.sample(&mut samples).unwrap();
         samples.population.iter().for_each(|p| println!("{:?}", p.permu));
-        panic!();
     }
 }
