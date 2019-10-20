@@ -210,9 +210,6 @@ impl<T> PermuPopulation<T> where
     /// Returns a `PermuPopulation` of the size given with `Permutations` filled with zeros . 
     /// The permutation's length must be specified. 
     ///
-    /// # Panics
-    /// Internally converts `0usize` to 
-    ///
     /// # Example
     /// ```
     /// use permu_rs::permutation::PermuPopulation;
@@ -295,7 +292,8 @@ impl<T> Population for PermuPopulation<T> where
     Debug, // NOTE : For debugging
 {
     
-    /// Sampling fuction for `PermuPopulation`.
+    /// Sampling fuction for `PermuPopulation`. Samples another 
+    /// `PermuPopulation` based on the `PermuPopulation` given.
     ///
     /// Example
     ///
