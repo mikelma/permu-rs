@@ -274,7 +274,6 @@ impl<T> PermuPopulation<T> where
                     Ok(v) => v,
                     Err(_) => panic!(),
                 }; 
-                // distr[e][j] += 1;
                 distr[j][e] += 1;
             })
         });
@@ -297,46 +296,61 @@ impl<T> Population for PermuPopulation<T> where
 {
 
     fn sample(&self, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
-        let distribution = self.learn();
-    
-        /*
-        let size = distr.len();
-        let mut sample: Vec<u16> = vec![0;size];
-        let mut used_indx: Vec<u16> = vec![];
+
+        let length = self.population[0].permu.len();
         
-        let order = permu_utils::random_permutation(size);
-        for j in order {
+        // Learn distribution
+        let distribution = self.learn();
+        let distribution = match distribution.soften {
+            true => distribution.distribution,
+            // NOTE: Hau learn metodoan egin daiteke, beti erabiliko da laplacerekin
+            false => {
+                distribution.distribution.iter()
+                    .map(|row| row.iter().map(|x| x+1).collect())
+                    .collect()
+            },
+        };
+        
+        (0..out.size).for_each(|out_i| {
 
-            // Calculate max sum
-            let mut s_max = 0;
-            for i in 0..size {
-                if !permu_utils::is_in(i as u16, &used_indx) {
-                    s_max += distr[j as usize][i];
-                } 
-            }
-            let rand: f64 = match s_max {
-                0 => 0.0,
-                _ => rand::thread_rng().gen_range(0.0, s_max as f64),
-            };
+            let mut used_indx = Vec::<usize>::with_capacity(length);
 
-            let mut s = 0;
-            let mut i = 0;
+            // let ref_permu = Permutation::<usize>::identity(length);
+            let order = Permutation::<usize>::random(length);
+            
+            order.permu.iter().for_each(|ord| {
+                //println!("i (ref indx): {}", ord);
 
-            while (s as f64) < rand {
-                if !permu_utils::is_in(i as u16, &used_indx) {
-                    s += distr[j as usize][i];
-                }
-                if (s as f64) < rand {
+                let (index_f, val_f) : (Vec<usize>, Vec<usize>) = distribution[*ord].iter()
+                    .enumerate()
+                    .filter(|(index, _)|            // Skip the values already existing in the permutation
+                        used_indx.iter() 
+                                .find( |&x| *x == *index )
+                                .is_none())
+                    .unzip();
+
+                let max: usize = val_f.iter().sum();
+                let rand: f64 = rand::thread_rng().gen_range(0.0, max as f64);
+                /*            
+                let v = val_f.iter() 
+                    .scan(0, |sum, v| Some(*sum+v))
+                    .zip(index_f.iter())
+                    .find(|(sum, index)| (*sum as f64) >= rand);
+                */
+                let mut i = 0;
+                let mut s = val_f[i];
+                while (s as f64) < rand {
                     i += 1;
+                    s += val_f[i];
                 }
-            }
-            sample[j as usize] = i as u16;
-            used_indx.push(i as u16);
-        }
-        sample
-        */
-
-        out.population[0] = Permutation::identity(out.population[0].permu.len());
+                let v = index_f[i];
+                out.population[out_i].permu[*ord] = match T::try_from(v) {
+                    Ok(v) => v,
+                    Err(_) => panic!("Conversion error when sampling"),
+                };
+                used_indx.push(index_f[i]);
+            }); 
+        });
         Ok(())
     }
 }
@@ -348,13 +362,14 @@ mod test_learn {
 
     #[test]
     fn test() {
-        let pop = PermuPopulation::<u8>::random(10, 5);
+        let pop = PermuPopulation::<u8>::random(1, 5);
         pop.population.iter().for_each(|p| println!("{:?}", p.permu));
+        println!("");
 
         let mut samples = PermuPopulation::<u8>::zeros(10, 5);
 
         pop.sample(&mut samples).unwrap();
         samples.population.iter().for_each(|p| println!("{:?}", p.permu));
-        // panic!();
+        panic!();
     }
 }
