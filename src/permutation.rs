@@ -294,7 +294,18 @@ impl<T> Population for PermuPopulation<T> where
     Display + // NOTE : For debugging
     Debug, // NOTE : For debugging
 {
-
+    
+    /// Sampling fuction for `PermuPopulation`.
+    ///
+    /// Example
+    ///
+    /// ```
+    /// use permu_rs::permutation::PermuPopulation;
+    /// use permu_rs::Population;
+    /// let pop = PermuPopulation::<u8>::random(1, 5);
+    /// let mut samples = PermuPopulation::<u8>::zeros(10, 5);
+    /// pop.sample(&mut samples).unwrap();
+    /// ```
     fn sample(&self, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
 
         let length = self.population[0].permu.len();
@@ -344,6 +355,7 @@ impl<T> Population for PermuPopulation<T> where
                     s += val_f[i];
                 }
                 let v = index_f[i];
+                // Never panics, as the boundaries of T are always respected here 
                 out.population[out_i].permu[*ord] = match T::try_from(v) {
                     Ok(v) => v,
                     Err(_) => panic!("Conversion error when sampling"),
