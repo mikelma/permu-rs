@@ -12,7 +12,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-permu-rs = "0.1.3"
+permu-rs = "0.1.3-1"
 ```
 
 Here's a simple example that tries to recover the original distribution from a sampled poplation:
