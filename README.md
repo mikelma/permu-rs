@@ -1,6 +1,9 @@
 # permu-rs
 A collection of utilities for permutations. It contains useful tools to create, manage and experiment with permutations.
 
+## Documentation
+You can find the documentation with examples [here](https://docs.rs/permu-rs).
+
 ## Usage
 
 Add this to your `Cargo.toml`:
