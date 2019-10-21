@@ -9,8 +9,12 @@ Add this to your `Cargo.toml`:
 [dependencies]
 permu-rs = "0.1.2"
 ```
+
 Here's a simple example that tries to recover the original distribution from a sampled poplation:
 ```rust
+    use permu_rs::permutation as permu;
+    use permu_rs::Population;
+
     let length = 5;         // Length of permutations
     let n_samples = 100;
     
@@ -42,3 +46,13 @@ Here's a simple example that tries to recover the original distribution from a s
     samples.learn().distribution.iter()
         .for_each(|p| println!("{:?}", p));
 ```
+### License
+
+This project is licensed under either of
+
+ * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+   http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license ([LICENSE-MIT](LICENSE-MIT) or
+   http://opensource.org/licenses/MIT)
+
+at your option.
