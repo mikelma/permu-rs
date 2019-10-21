@@ -4,9 +4,9 @@ use std::fmt::{Debug, Display};
 
 use rand::Rng;
 
-use crate::Population;
+use crate::{Population, Distribution};
 
-/// Contains a permutation vector methods to generate permutations.
+/// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
 pub struct Permutation<T> {
     pub permu : Vec<T>,
@@ -168,12 +168,6 @@ mod tests_permu {
     }
 }
 
-/// Probability distribution for permutation populations.
-pub struct PermuDistribution {
-    pub distribution : Vec<Vec<usize>>,
-    pub soften : bool,
-}
-
 /// Population of `Permutations`.
 pub struct PermuPopulation<T> {
     pub population : Vec<Permutation<T>>,
@@ -241,44 +235,8 @@ impl<T> PermuPopulation<T> where
         (0..size).for_each(|_| pop.push(Permutation::random(length)) ); // Generate
         PermuPopulation { population : pop, size : size}
     }
-
-    /// Returns a probability distribution `PermuDistribution` learned from the current `PermuPopulation`.
-    ///
-    /// # Example
-    /// ```
-    /// use permu_rs::permutation::{PermuPopulation, Permutation};
-    /// let v = vec![Permutation::<u8>::from_vec_unsec(vec![0,1,2,3]),
-    ///              Permutation::<u8>::from_vec_unsec(vec![1,2,0,3])];
-    /// let pop = PermuPopulation::from_vec(v); 
-    /// let distr = pop.learn();
-    ///
-    /// let target = vec![vec![1,1,0,0],
-    ///                   vec![0,1,1,0],
-    ///                   vec![1,0,1,0],
-    ///                   vec![0,0,0,2]];
-    /// assert_eq!(target, distr.distribution);
-    /// ```
-    ///
-    // NOTE: (i : positions, j : values)
-    pub fn learn(&self) -> PermuDistribution { 
-        let m = self.population[0].permu.len(); // Number of positions
-        
-        let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
-
-        (0..self.size).for_each(|i| {
-            (0..self.population[0].permu.len()).for_each(|j| {
-                let e : usize = match self.population[i].permu[j].try_into() {
-                    Ok(v) => v,
-                    Err(_) => panic!(),
-                }; 
-                distr[j][e] += 1;
-            })
-        });
-        PermuDistribution { distribution : distr , soften : false }
-    }
 }
 
-/// Implementation for trait `Sampleable`.
 impl<T> Population for PermuPopulation<T> where 
     T : Copy +
     From<u8> +
@@ -292,33 +250,73 @@ impl<T> Population for PermuPopulation<T> where
     Debug, // NOTE : For debugging
 {
     
-    /// Sampling fuction for `PermuPopulation`. Samples another 
-    /// `PermuPopulation` based on the `PermuPopulation` given.
+    /// Implementation of `learn` method for `PermuPopulation`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::{Population, Distribution};
+    /// use permu_rs::permutation::{PermuPopulation, Permutation};
+    ///
+    /// let v = vec![Permutation::<u8>::from_vec_unsec(vec![0,1,2,3]),
+    ///              Permutation::<u8>::from_vec_unsec(vec![1,2,0,3])];
+    /// let pop = PermuPopulation::from_vec(v); 
+    /// let distr = pop.learn();
+    ///
+    /// let target = vec![vec![1,1,0,0],
+    ///                   vec![0,1,1,0],
+    ///                   vec![1,0,1,0],
+    ///                   vec![0,0,0,2]];
+    /// assert_eq!(target, distr.distribution);
+    /// ```
+    ///
+    // NOTE: (i : positions, j : values)
+    fn learn(&self) -> Distribution { 
+        let m = self.population[0].permu.len(); // Number of positions
+        
+        let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
+
+        (0..self.size).for_each(|i| {
+            (0..self.population[0].permu.len()).for_each(|j| {
+                let e : usize = match self.population[i].permu[j].try_into() {
+                    Ok(v) => v,
+                    Err(_) => panic!(),
+                }; 
+                distr[j][e] += 1;
+            })
+        });
+        Distribution { distribution : distr , soften : false }
+    }
+
+    /// Implementation of `sample` method for `PermuPopulation`.
     ///
     /// Example
     ///
     /// ```
     /// use permu_rs::permutation::PermuPopulation;
-    /// use permu_rs::Population;
-    /// let pop = PermuPopulation::<u8>::random(1, 5);
-    /// let mut samples = PermuPopulation::<u8>::zeros(10, 5);
-    /// pop.sample(&mut samples).unwrap();
+    /// use permu_rs::{Population, Distribution};
+    ///
+    /// let pop = PermuPopulation::<u8>::random(1, 5); // Population to learn from
+    /// let mut samples = PermuPopulation::<u8>::zeros(10, 5); // Population to fill with samples
+    /// let mut distr = pop.learn();
+    /// Population::sample(&mut distr, &mut samples).unwrap();
     /// ```
-    fn sample(&self, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
-
-        let length = self.population[0].permu.len();
+    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
         
-        // Learn distribution
-        let distribution = self.learn();
-        let distribution = match distribution.soften {
-            true => distribution.distribution,
-            // NOTE: Hau learn metodoan egin daiteke, beti erabiliko da laplacerekin
-            false => {
-                distribution.distribution.iter()
-                    .map(|row| row.iter().map(|x| x+1).collect())
-                    .collect()
-            },
+        // Check distribution and population's permus' sizes
+        let length = match distr.distribution.len() == out.population[0].permu.len() {
+            true => distr.distribution.len(),
+            false => return Err("The size of the given distribution does not match 
+                                with the length of the permutations to sample"),
         };
+        
+        // Check if the distribution is soften 
+        if !distr.soften {
+            // If not, soften the distribution by adding one to every element of the matrix
+            distr.distribution = distr.distribution.iter()
+                .map(|row| row.iter().map(|x| x+1).collect())
+                .collect();
+            distr.soften = true;
+        }
         
         (0..out.size).for_each(|out_i| {
 
@@ -330,7 +328,7 @@ impl<T> Population for PermuPopulation<T> where
             order.permu.iter().for_each(|ord| {
                 //println!("i (ref indx): {}", ord);
 
-                let (index_f, val_f) : (Vec<usize>, Vec<usize>) = distribution[*ord].iter()
+                let (index_f, val_f) : (Vec<usize>, Vec<usize>) = distr.distribution[*ord].iter()
                     .enumerate()
                     .filter(|(index, _)|            // Skip the values already existing in the permutation
                         used_indx.iter() 
@@ -378,7 +376,9 @@ mod test_learn {
 
         let mut samples = PermuPopulation::<u8>::zeros(10, 5);
 
-        pop.sample(&mut samples).unwrap();
+        let mut distr = pop.learn();
+
+        Population::sample(&mut distr, &mut samples).unwrap();
         samples.population.iter().for_each(|p| println!("{:?}", p.permu));
     }
 }
