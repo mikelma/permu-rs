@@ -17,10 +17,12 @@ permu-rs = "0.1.3"
 
 Here's a simple example that tries to recover the original distribution from a sampled poplation:
 ```rust
-    use permu_rs::permutation as permu;
-    use permu_rs::Population;
+use permu_rs::permutation as permu;
+use permu_rs::Population;
 
-    let length = 5;         // Length of permutations
+fn main() {
+
+    let length = 5; // Length of permutations
     let n_samples = 100;
     
     // Create a population of identity permutations (elements are of 8 bits, so max length is 255)
@@ -28,7 +30,7 @@ Here's a simple example that tries to recover the original distribution from a s
     (0..n_samples).for_each(|_| {
         pop.push(permu::Permutation::identity(length));
     });
-    let pop = permu::PermuPopulation::from__vec(pop);
+    let pop = permu::PermuPopulation::from_vec(pop);
     
     let mut distr = pop.learn(); // Calculate distribution
         
@@ -50,6 +52,7 @@ Here's a simple example that tries to recover the original distribution from a s
     // (+1 to every value of distribution matrix) before sampling.
     samples.learn().distribution.iter()
         .for_each(|p| println!("{:?}", p));
+}
 ```
 ### License
 
