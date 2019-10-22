@@ -94,7 +94,7 @@ impl<T> Permutation<T> where
         Permutation{ permu : permu }
     }
     
-    /// Returns an identity vector of the length given.
+    /// Returns an identity permutation of the length given.
     ///
     /// # Panics
     /// If the length given is grater than the maximum value that `T` can hold,
@@ -108,13 +108,14 @@ impl<T> Permutation<T> where
     /// ```
     pub fn identity(length: usize) -> Permutation<T> {
         let mut identity: Vec<T> = Vec::new();
-
-        for i in 0..length  {
+        
+        (0..length).for_each(|i| {
             identity.push(match T::try_from(i) {
                 Ok(v) => v,
                 Err(_) => panic!("Can not create a permutation longer than the max size of the its type"),
             });
-        }
+        });
+       
         Permutation { permu : identity }
     }
 
