@@ -359,6 +359,7 @@ impl<T> Population for PermuPopulation<T> where
                 };
                 used_indx.push(index_f[i]);
             }); 
+            println!("i: {}", out_i); // NOTE: DEBUG
         });
         Ok(())
     }
