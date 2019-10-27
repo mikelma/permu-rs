@@ -347,9 +347,9 @@ impl<T> Population for PermuPopulation<T> where
                 // let max: usize = val_f.iter().sum();
                 // println!("Start while");
                 let mut max = 0; 
-                for distr_i in 0..length {
+                // for distr_i in 0..length {
+                (0..length).for_each(|distr_i| {
                     let mut add = true;
-                    // Hemen
                     // for i_used_index in 0..used_index_used {
                     let mut i_used_index = 0;
                     while  i_used_index < used_index_used && add {
@@ -359,7 +359,7 @@ impl<T> Population for PermuPopulation<T> where
                     if add {
                         max += distr.distribution[*ord][distr_i];
                     }
-                }
+                });
 
                 // println!("distr: {:?}", distr.distribution[*ord]);
                 // println!("max: {}", max);
