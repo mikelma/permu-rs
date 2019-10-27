@@ -345,7 +345,7 @@ impl<T> Population for PermuPopulation<T> where
                 */
 
                 // let max: usize = val_f.iter().sum();
-                println!("Start while");
+                // println!("Start while");
                 let mut max = 0; 
                 for distr_i in 0..length {
                     let mut add = true;
@@ -360,8 +360,9 @@ impl<T> Population for PermuPopulation<T> where
                         max += distr.distribution[*ord][distr_i];
                     }
                 }
-                println!("distr: {:?}", distr.distribution[*ord]);
-                println!("max: {}", max);
+
+                // println!("distr: {:?}", distr.distribution[*ord]);
+                // println!("max: {}", max);
                 
                 // NOTE: Could be f32?
                 let rand: f64 = rand::thread_rng().gen_range(0.0, max as f64);
