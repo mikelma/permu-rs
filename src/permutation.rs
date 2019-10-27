@@ -319,16 +319,22 @@ impl<T> Population for PermuPopulation<T> where
             distr.soften = true;
         }
         
+        let mut used_index = vec![0;length];
+
         (0..out.size).for_each(|out_i| {
 
-            let mut used_indx = Vec::<usize>::with_capacity(length);
+            let mut used_index_used = 0;
 
             // let ref_permu = Permutation::<usize>::identity(length);
             let order = Permutation::<usize>::random(length);
             
+            // The permutation is created element by element in a random order
+            // 'ord' is the index of the element to precess.
             order.permu.iter().for_each(|ord| {
-                //println!("i (ref indx): {}", ord);
 
+                let permu = &mut out.population[out_i].permu;
+                
+                /*
                 let (index_f, val_f) : (Vec<usize>, Vec<usize>) = distr.distribution[*ord].iter()
                     .enumerate()
                     .filter(|(index, _)|            // Skip the values already existing in the permutation
@@ -336,15 +342,31 @@ impl<T> Population for PermuPopulation<T> where
                                 .find( |&x| *x == *index )
                                 .is_none())
                     .unzip();
-
-                let max: usize = val_f.iter().sum();
-                let rand: f64 = rand::thread_rng().gen_range(0.0, max as f64);
-                /*            
-                let v = val_f.iter() 
-                    .scan(0, |sum, v| Some(*sum+v))
-                    .zip(index_f.iter())
-                    .find(|(sum, index)| (*sum as f64) >= rand);
                 */
+
+                // let max: usize = val_f.iter().sum();
+                println!("Start while");
+                let mut max = 0; 
+                for distr_i in 0..length {
+                    let mut add = true;
+                    // Hemen
+                    // for i_used_index in 0..used_index_used {
+                    let mut i_used_index = 0;
+                    while  i_used_index < used_index_used && add {
+                        add = distr_i != used_index[i_used_index];
+                        i_used_index += 1;
+                    } 
+                    if add {
+                        max += distr.distribution[*ord][distr_i];
+                    }
+                }
+                println!("distr: {:?}", distr.distribution[*ord]);
+                println!("max: {}", max);
+                
+                // NOTE: Could be f32?
+                let rand: f64 = rand::thread_rng().gen_range(0.0, max as f64);
+
+                /*
                 let mut i = 0;
                 let mut s = val_f[i];
                 while (s as f64) < rand {
@@ -352,12 +374,44 @@ impl<T> Population for PermuPopulation<T> where
                     s += val_f[i];
                 }
                 let v = index_f[i];
+
                 // Never panics, as the boundaries of T are always respected here 
-                out.population[out_i].permu[*ord] = match T::try_from(v) {
+                permu[*ord] = match T::try_from(v) {
                     Ok(v) => v,
                     Err(_) => panic!("Conversion error when sampling"),
                 };
                 used_indx.push(index_f[i]);
+                */
+                let mut s = 0;
+                let mut distr_i = 0;
+                let mut stop = false;
+                while !stop {
+                    
+                    // Find in index is used already 
+                    let mut used = false;
+                    let mut i = 0;
+                    while i < used_index_used  && !used {
+                        used = used_index[i] ==  distr_i;
+                        i += 1;
+                    }
+                    
+                    if !used {
+                        s += distr.distribution[*ord][distr_i];
+                    }
+
+                    if (s as f64) < rand {
+                        distr_i += 1;
+                    } else {
+                        stop = true;
+                    }
+                } 
+
+                permu[*ord] = match T::try_from(distr_i) {
+                    Ok(v) => v,
+                    Err(_) => panic!("Conversion error when sampling"),
+                };
+                used_index[used_index_used] = distr_i;
+                used_index_used += 1;
             }); 
             // println!("i: {}", out_i); // NOTE: DEBUG
         });
