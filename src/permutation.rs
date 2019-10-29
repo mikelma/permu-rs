@@ -318,8 +318,11 @@ impl<T> Population for PermuPopulation<T> where
             distr.soften = true;
         }
         
-        (0..out.size).for_each(|out_i| {
+        // let mut used_indx = Vec::<usize>::with_capacity(length);
 
+        (0..out.size).for_each(|out_i| {
+            
+            // used_indx.clear();
             let mut used_indx = Vec::<usize>::with_capacity(length);
 
             // let ref_permu = Permutation::<usize>::identity(length);
