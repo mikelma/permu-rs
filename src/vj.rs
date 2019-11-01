@@ -42,29 +42,46 @@ impl<T> Vj<T> where
     /// assert_eq!(vec![0,0,0], Vj::zeros(3).vj);
     /// ```
     pub fn zeros(lenght: usize) -> Vj<T> {
-        let mut v = Vec::with_capacity(lenght);
-        (0..lenght).for_each(|_| v.push(T::from(0u8)));
-        Vj { vj : v }
+        Vj { vj : vec![T::from(0u8); lenght] }
     }
-
-    /*
-    pub fn from_permu(permu: &permutation::Permutation<T>, vj: &mut Vj<T>) -> Result<(), &'static str>{
+    
+    /// Fills a given `Vj` with the vj representation of the given `Permutation`.
+    ///
+    /// # Errors
+    /// The length of the `Vj` must be the size of the `Permutation` - 1. Otherwise, 
+    /// the function will return an error.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::*;
+    /// let permu = permutation::Permutation::<u8>::from_vec(vec![0,3,2,1]).unwrap();
+    /// let mut vj_repr = vj::Vj::zeros(3);
+    /// vj::Vj::transform_from_permu(&permu, &mut vj_repr).unwrap();
+    /// assert_eq!(vec![0,2,1], vj_repr.vj);
+    /// ```
+    pub fn transform_from_permu(permu: &permutation::Permutation<T>, vj: &mut Vj<T>) -> Result<(), &'static str>{
         
-        assert_eq!(permu.len()-1, vj.len(), "Lenght of the vj vector must be permu.len()-1");
-        
-        // Reset vj
-        for i in 0..vj.len() {
-            vj[i] = 0;
+        // Check if sizes are correct
+        if permu.permu.len()-1 != vj.vj.len() {
+            return Err("Lenght of the vj vector must be permu.len()-1");
         }
 
-        for indx in 0..permu.len() {
-            for i in indx..permu.len() {
-                if permu[i] < permu[indx] {
-                    vj[indx] += 1;
+        for index in 0..vj.vj.len() {
+
+            let mut n = 0;
+            for i in index..permu.permu.len() {
+
+                if permu.permu[index] > permu.permu[i] {
+                    n += 1;
                 }            
+
+                // This will never fail, as the boundaries of T are always respected
+                vj.vj[index] = match T::try_from(n) {
+                    Ok(v) => v,
+                    Err(_) => return Err("Error while coverting usize to T"),
+                };
             }
         }
         Ok(())
     } 
-    */
 }
