@@ -56,10 +56,10 @@ impl<T> Vj<T> where
     /// use permu_rs::*;
     /// let permu = permutation::Permutation::<u8>::from_vec(vec![0,3,2,1]).unwrap();
     /// let mut vj_repr = vj::Vj::zeros(3);
-    /// vj::Vj::transform_from_permu(&permu, &mut vj_repr).unwrap();
+    /// vj::Vj::from_permu(&permu, &mut vj_repr).unwrap();
     /// assert_eq!(vec![0,2,1], vj_repr.vj);
     /// ```
-    pub fn transform_from_permu(permu: &permutation::Permutation<T>, vj: &mut Vj<T>) -> Result<(), &'static str>{
+    pub fn from_permu(permu: &permutation::Permutation<T>, vj: &mut Vj<T>) -> Result<(), &'static str>{
         
         // Check if sizes are correct
         if permu.permu.len()-1 != vj.vj.len() {
