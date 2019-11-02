@@ -86,6 +86,7 @@ impl<T> Vj<T> where
         Ok(())
     } 
 
+    /// Returns a `Permutation` created from the `Vj` representation.
     ///
     /// # Errors
     /// The length of the `Vj` must be the size of the `Permutation` - 1. Otherwise, 
@@ -125,8 +126,7 @@ impl<T> Vj<T> where
             .for_each(|(index, vj_val)| {
 
                 // Get the value and index of element in e[vj_val]
-                let value = e
-                    .iter()
+                let value = e.iter()
                     .enumerate()
                     .find(|(i, x)| *vj_val == match T::try_from(*i) {
                         Ok(v) => v,
