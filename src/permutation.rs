@@ -8,6 +8,7 @@ use crate::{Population, Distribution};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Permutation<T> {
     pub permu : Vec<T>,
 }

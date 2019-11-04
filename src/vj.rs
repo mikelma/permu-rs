@@ -6,6 +6,7 @@ use crate::permutation;
 
 /// Contains a Vj vector.
 #[derive(Debug)]
+#[derive(Clone)]
 pub struct Vj<T> {
     pub vj : Vec<T>,
 }
