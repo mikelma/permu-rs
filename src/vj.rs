@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use rand::Rng;
 use std::fmt::{Debug, Display};
 
@@ -29,7 +29,7 @@ impl<T> Vj<T> where
     /// ```
     /// use permu_rs::vj::Vj;
     /// let vj_vec = vec![0,0,1,1,4];
-    /// let my_vj =  Vj::<u8>::from_vec(vj_vec);
+    /// let my_vj = Vj::<u8>::from_vec(vj_vec);
     /// ```
     pub fn from_vec(vec : Vec<T>) -> Vj<T> {
         Vj { vj : vec }        
@@ -146,3 +146,38 @@ impl<T> Vj<T> where
         Ok(())
     } 
 }
+
+pub struct VjPopulation<T> {
+    pub population : Vec<Vj<T>>,
+    pub size : usize,
+}
+
+impl<T> VjPopulation<T> where 
+    T : Copy +
+    From<u8> +
+    TryFrom<usize> +
+    PartialEq<T> +
+    rand::distributions::range::SampleRange +
+    std::cmp::PartialOrd +
+    std::ops::Sub +
+    Into<usize> +
+    Display + // NOTE : For debugging
+    Debug, // NOTE : For debugging
+{
+    /// Creates a `VjPopulation` of the size given with `Vj`s of length specified, filled with 0s. 
+    /// This population represents a population of identity permutations.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::*;
+    /// ```
+    pub fn zeros(size: usize, length: usize) -> VjPopulation<T> {
+        let mut population: Vec<Vj<T>> = Vec::with_capacity(size); 
+        let zeros = vec![T::from(0u8);length];
+
+        (0..size).for_each(|_| population.push(Vj::from_vec(zeros.clone())));
+        
+        VjPopulation { population, size }
+    }
+}
+
