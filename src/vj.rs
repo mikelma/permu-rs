@@ -15,7 +15,8 @@ impl<T> Vj<T> where
     T : Copy +
     From<u8> +
     TryFrom<usize> +
-    PartialEq<T> +
+    //PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
@@ -157,7 +158,8 @@ impl<T> VjPopulation<T> where
     T : Copy +
     From<u8> +
     TryFrom<usize> +
-    PartialEq<T> +
+    // PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +

@@ -18,7 +18,8 @@ impl<T> Permutation<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    PartialEq<T> +
+    // PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
@@ -181,7 +182,8 @@ impl<T> PermuPopulation<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    PartialEq<T> +
+    // PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
@@ -244,7 +246,8 @@ impl<T> Population for PermuPopulation<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    PartialEq<T> +
+    // PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
