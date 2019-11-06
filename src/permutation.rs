@@ -174,6 +174,8 @@ mod tests_permu {
 
 /// Population of `Permutations`.
 #[derive(PartialEq)]
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct PermuPopulation<T> {
     pub population : Vec<Permutation<T>>,
     pub size : usize,
