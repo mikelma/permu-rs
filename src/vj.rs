@@ -43,8 +43,8 @@ impl<T> Vj<T> where
     /// use permu_rs::vj::Vj;
     /// assert_eq!(vec![0,0,0], Vj::<u8>::zeros(3).vj);
     /// ```
-    pub fn zeros(lenght: usize) -> Vj<T> {
-        Vj { vj : vec![T::from(0u8); lenght] }
+    pub fn zeros(length: usize) -> Vj<T> {
+        Vj { vj : vec![T::from(0u8); length] }
     }
     
     /// Fills a given `Vj` with the vj representation of the given `Permutation`.
@@ -129,7 +129,7 @@ impl<T> Vj<T> where
                 // Get the value and index of element in e[vj_val]
                 let value = e.iter()
                     .enumerate()
-                    .find(|(i, x)| *vj_val == match T::try_from(*i) {
+                    .find(|(i, _)| *vj_val == match T::try_from(*i) {
                         Ok(v) => v,
                         Err(_) => panic!("This should not fail"),
                     });
@@ -168,9 +168,19 @@ impl<T> VjPopulation<T> where
     /// Creates a `VjPopulation` of the size given with `Vj`s of length specified, filled with 0s. 
     /// This population represents a population of identity permutations.
     ///
-    /// # Example
+    /// # Example TODO
     /// ```
     /// use permu_rs::*;
+    /// use permutation::{Permutation, PermuPopulation};
+    /// use vj::{Vj, VjPopulation};
+    /// /*
+    /// let (size, length) = (20,10);
+    /// let identity = PermuPopulation::from_vec(nvec![Permutation::<u8>::identity(length);size]);
+    /// let vjs = VjPopulation::<u8>::zeros(size,length);
+    /// let permus = PermuPopulation::<u8>::zeros(size, length);
+    /// vjs.to_permu(&mut permus);
+    /// assert_eq!(identity.population, permus.population);
+    /// */
     /// ```
     pub fn zeros(size: usize, length: usize) -> VjPopulation<T> {
         let mut population: Vec<Vj<T>> = Vec::with_capacity(size); 
@@ -179,6 +189,23 @@ impl<T> VjPopulation<T> where
         (0..size).for_each(|_| population.push(Vj::from_vec(zeros.clone())));
         
         VjPopulation { population, size }
+    }
+
+    pub fn to_permu(&self, permu_pop: &mut permutation::PermuPopulation<T>) -> Result<(), &'static str> {
+
+        // Check if for every Vj is a Permutation in permu_pop
+        if permu_pop.size != self.size {
+            return Err("VjPopulation and the given PermuPopulation sizes must be equal");
+        }
+        
+        // Convert each Vj of the population to permutation 
+        (0..self.size).for_each(|i| {
+            match self.population[i].to_permu(&mut permu_pop.population[i]) {
+                Ok(_) => (),
+                Err(e) => panic!("Fatal error converting VjPopulation to PermuPopulation: {}", e),
+            }
+        });
+        Ok(())
     }
 }
 
