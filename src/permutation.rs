@@ -9,6 +9,7 @@ use crate::{Population, Distribution};
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
 #[derive(Clone)]
+#[derive(PartialEq)]
 pub struct Permutation<T> {
     pub permu : Vec<T>,
 }
@@ -172,6 +173,7 @@ mod tests_permu {
 }
 
 /// Population of `Permutations`.
+#[derive(PartialEq)]
 pub struct PermuPopulation<T> {
     pub population : Vec<Permutation<T>>,
     pub size : usize,

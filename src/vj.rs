@@ -7,6 +7,7 @@ use crate::permutation;
 /// Contains a Vj vector.
 #[derive(Debug)]
 #[derive(Clone)]
+#[derive(PartialEq)]
 pub struct Vj<T> {
     pub vj : Vec<T>,
 }
@@ -149,6 +150,7 @@ impl<T> Vj<T> where
     } 
 }
 
+#[derive(PartialEq)]
 pub struct VjPopulation<T> {
     pub population : Vec<Vj<T>>,
     pub size : usize,
