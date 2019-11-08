@@ -151,6 +151,8 @@ impl<T> Vj<T> where
 }
 
 #[derive(PartialEq)]
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct VjPopulation<T> {
     pub population : Vec<Vj<T>>,
     pub size : usize,
@@ -172,19 +174,19 @@ impl<T> VjPopulation<T> where
     /// Creates a `VjPopulation` of the size given with `Vj`s of length specified, filled with 0s. 
     /// This population represents a population of identity permutations.
     ///
-    /// # Example TODO
+    /// # Example
     /// ```
     /// use permu_rs::*;
     /// use permutation::{Permutation, PermuPopulation};
     /// use vj::{Vj, VjPopulation};
-    /// /*
+    ///
     /// let (size, length) = (20,10);
-    /// let identity = PermuPopulation::from_vec(nvec![Permutation::<u8>::identity(length);size]);
-    /// let vjs = VjPopulation::<u8>::zeros(size,length);
-    /// let permus = PermuPopulation::<u8>::zeros(size, length);
-    /// vjs.to_permu(&mut permus);
-    /// assert_eq!(identity.population, permus.population);
-    /// */
+    /// let identity = PermuPopulation::from_vec(vec![Permutation::<u8>::identity(length);size]);
+    /// let vjs = VjPopulation::<u8>::zeros(size,length-1);
+    /// let mut permus = PermuPopulation::<u8>::zeros(size, length);
+    ///
+    /// vjs.to_permus(&mut permus);
+    /// assert_eq!(identity, permus);
     /// ```
     pub fn zeros(size: usize, length: usize) -> VjPopulation<T> {
         let mut population: Vec<Vj<T>> = Vec::with_capacity(size); 
@@ -194,12 +196,44 @@ impl<T> VjPopulation<T> where
         
         VjPopulation { population, size }
     }
-
-    pub fn to_permu(&self, permu_pop: &mut permutation::PermuPopulation<T>) -> Result<(), &'static str> {
+    
+    /// Transforms the `Vj` to its `Permutation` representation. Fills a given `PermuPopulation`
+    /// based on the `Vj`s from the `VjPopulation`. The `Vj` -> `Permutation` transformation is 
+    /// done respecting the positions in the population.
+    ///
+    /// # Errors
+    /// Returns an error if the size of both `Populations` are not equal. Also, the method will 
+    /// return an error if the length of the  `Permutations` in `PermuPopulation` are not the
+    /// length of the `Vj` - 1.
+    ///
+    /// # Panics
+    /// The mothod will panic if a `Vj` of the `VjPopulation` has not a `Permutation`
+    /// representation.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::*;
+    /// let (size, length) = (5, 10);
+    ///
+    /// let mut out_pop = permutation::PermuPopulation::<u8>::zeros(size, length); // Output permutation
+    ///
+    /// let identity_pop = permutation::PermuPopulation::<u8>::identity(size, length);
+    /// let vjs = vj::VjPopulation::<u8>:: zeros(size, length-1);
+    ///
+    /// vjs.to_permus(&mut out_pop);
+    ///
+    /// assert_eq!(out_pop, identity_pop);
+    /// ```
+    pub fn to_permus(&self, permu_pop: &mut permutation::PermuPopulation<T>) -> Result<(), &'static str> {
 
         // Check if for every Vj is a Permutation in permu_pop
         if permu_pop.size != self.size {
             return Err("VjPopulation and the given PermuPopulation sizes must be equal");
+        }
+
+        // Check Permutation and Vj lengths are compatible
+        if permu_pop.population[0].permu.len() != self.population[0].vj.len()+1 {
+            return Err("The length of Permutations from PermuPopulation must be the length of Vjs+1");
         }
         
         // Convert each Vj of the population to permutation 
@@ -211,5 +245,11 @@ impl<T> VjPopulation<T> where
         });
         Ok(())
     }
+    
+    /*
+    pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>) -> Result<VjPopulation<T>, &'static str> {
+        if permu_pop.size != self.size
+    }
+    */
 }
 
