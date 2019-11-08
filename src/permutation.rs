@@ -228,6 +228,24 @@ impl<T> PermuPopulation<T> where
 
         PermuPopulation {population: pop, size : size}
     }    
+    /// Creates a `PermuPopulation` of identity `Permutation`s.
+    /// The number of `Permutation`s in the returned `PermuPopulation` is given by
+    /// `size` parameter and the length of `Permutation`s is `length`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation as permu;
+    /// let population = permu::PermuPopulation::<u8>::identity(10, 5);
+    /// population.population.iter()
+    ///     .for_each(|p| assert_eq!(*p, permu::Permutation::<u8>::identity(5)));
+    /// ```
+    pub fn identity(size: usize, length: usize) -> PermuPopulation<T> {
+        let mut pop : Vec<Permutation<T>> = Vec::new(); 
+        (0..size).for_each(|_| pop.push(Permutation::identity(length)));
+
+        PermuPopulation { population : pop, size : size}
+        
+    }
     
     /// Initializes a `PermuPopulation` of random `Permutations` of the size and length given.
     ///
