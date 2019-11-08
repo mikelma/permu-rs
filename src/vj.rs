@@ -246,10 +246,18 @@ impl<T> VjPopulation<T> where
         Ok(())
     }
     
-    /*
-    pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>) -> Result<VjPopulation<T>, &'static str> {
-        if permu_pop.size != self.size
+    // TODO Documentation
+    pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>, 
+                       vjs: &mut VjPopulation<T>) -> Result<(), &'static str> {
+        
+        permu_pop.population.iter()
+            .enumerate()
+            .for_each(|(i, permu)| { match Vj::from_permu(permu, &mut vjs.population[i]) {
+                Ok(_) => (),
+                Err(e) => panic!(e),
+            }});
+
+        Ok(())
     }
-    */
 }
 
