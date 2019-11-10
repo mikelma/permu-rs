@@ -246,7 +246,30 @@ impl<T> VjPopulation<T> where
         Ok(())
     }
     
-    // TODO Documentation
+    /// Fills an existing `VjPopulation` with `Vj`s based on `Permutations` in a given
+    /// `PermuPopulation`. The `Permutation` -> `Vj` transformation is done 
+    /// respecting the positions in the population.
+    ///
+    /// # Panics 
+    /// The function panics if the internal `Vj::from_permu` returns an `Error`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::{Permutation, PermuPopulation};
+    /// use permu_rs::vj::{Vj, VjPopulation};
+    ///
+    /// let (size, length) = (5, 4);
+    ///
+    /// let mut population = vec![Vj::<u16>::from_vec(vec![1,0,0]); size];
+    /// let mut vjs = VjPopulation{ population, size };
+    ///
+    /// let vj_ok = VjPopulation::<u16>::zeros(size, length-1); // Correct result
+    /// let permus = PermuPopulation::<u16>::identity(size, length);
+    ///
+    /// VjPopulation::from_permus(&permus, &mut vjs);
+    /// assert_eq!(vj_ok, vjs);
+    /// ```
+    ///
     pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>, 
                        vjs: &mut VjPopulation<T>) -> Result<(), &'static str> {
         
