@@ -5,6 +5,7 @@ use std::fmt::{Debug, Display};
 use rand::Rng;
 
 use crate::{Population, Distribution};
+use crate::vj::{Vj, VjPopulation};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
@@ -155,6 +156,29 @@ impl<T> Permutation<T> where
             };
             Self::contains(&self.permu, elem)
         })
+    }
+    
+    /// Returns `Result` containing a `Vj` based on the `Permutation`.
+    ///
+    /// # Error
+    /// See `Vj::from_permu` Error section.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::vj::Vj;
+    /// use permu_rs::permutation::Permutation;
+    ///
+    /// let permu = Permutation::<u8>::from_vec(vec![3,2,1,0]).unwrap(); 
+    /// let ok_vj: Vj<u8> = Vj { vj : vec![3,2,1]};
+    /// let mut base: Vj<u8> = Vj { vj : vec![0,0,0] };
+    ///
+    /// permu.to_vj(&mut base);
+    ///
+    /// assert_eq!(ok_vj, base);
+    /// ```
+    pub fn to_vj(&self, out: &mut Vj<T>) -> Result<(), &'static str> {
+        Vj:: from_permu(&self, out)?;
+        Ok(())
     }
 }
 
