@@ -16,12 +16,13 @@ impl<T> Vj<T> where
     T : Copy +
     From<u8> +
     TryFrom<usize> +
+    TryInto<usize> +
     //PartialEq<T> +
     Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    Into<usize> +
+    // Into<usize> +
     Display + // NOTE : For debugging
     Debug // NOTE : For debugging
 {
@@ -53,7 +54,8 @@ impl<T> Vj<T> where
     ///
     /// # Errors
     /// The length of the `Vj` must be the size of the `Permutation` - 1. Otherwise, 
-    /// the function will return an error.
+    /// the function will return an error. Also, if a type conversion error happens,
+    /// the method returns an `Error`.
     ///
     /// # Example
     /// ```
@@ -162,12 +164,13 @@ impl<T> VjPopulation<T> where
     T : Copy +
     From<u8> +
     TryFrom<usize> +
+    TryInto<usize> +
     // PartialEq<T> +
     Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    Into<usize> +
+    // Into<usize> +
     Display + // NOTE : For debugging
     Debug, // NOTE : For debugging
 {
