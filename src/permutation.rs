@@ -177,8 +177,30 @@ impl<T> Permutation<T> where
     /// assert_eq!(ok_vj, base);
     /// ```
     pub fn to_vj(&self, out: &mut Vj<T>) -> Result<(), &'static str> {
-        Vj:: from_permu(&self, out)?;
-        Ok(())
+        Vj:: from_permu(&self, out)
+    }
+
+    /// Returns `Result` containing a `Permutation` based on the given `Permutation`.
+    ///
+    /// # Error
+    /// See `Vj::to:permu` Error section.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::vj::Vj;
+    /// use permu_rs::permutation::Permutation;
+    ///
+    /// let vj : Vj<u8> = Vj { vj : vec![0,0,0] }; // Base Vj
+    /// let ok_permu = Permutation::<u8>::identity(4); // Expected permutation
+    /// let mut permu = Permutation::<u8>::random(4); // Random permutation 
+    ///
+    /// Permutation::from_vj(&vj, &mut permu); // Fill permu based on vj 
+    ///
+    /// assert_eq!(ok_permu, permu);
+    /// 
+    /// ```
+    pub fn from_vj(vj: &Vj<T>, out: &mut Permutation<T>) -> Result<(), &'static str> {
+        Vj::to_permu(&vj,out)
     }
 }
 
