@@ -4,7 +4,7 @@ use std::fmt::{Debug, Display};
 
 use crate::permutation;
 
-/// Contains a Vj vector.
+/// Contains a Vj vector and method to generate and trasnform them.
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(PartialEq)]
@@ -152,6 +152,7 @@ impl<T> Vj<T> where
     } 
 }
 
+/// Population of Vj objects. Includes initilializers and transformation tools.
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
