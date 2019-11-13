@@ -5,6 +5,7 @@
 //! bijective-transformations.
 //!
 pub mod permutation;
+pub mod vj;
 
 /// Contains the methods a `Population` should have.
 pub trait Population {

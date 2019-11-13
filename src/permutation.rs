@@ -5,9 +5,12 @@ use std::fmt::{Debug, Display};
 use rand::Rng;
 
 use crate::{Population, Distribution};
+use crate::vj::{Vj, VjPopulation};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
+#[derive(Clone)]
+#[derive(PartialEq)]
 pub struct Permutation<T> {
     pub permu : Vec<T>,
 }
@@ -17,7 +20,8 @@ impl<T> Permutation<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    PartialEq<T> +
+    // PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
@@ -153,6 +157,51 @@ impl<T> Permutation<T> where
             Self::contains(&self.permu, elem)
         })
     }
+    
+    /// Returns `Result` containing a `Vj` based on the `Permutation`.
+    ///
+    /// # Error
+    /// See `Vj::from_permu` Error section.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::vj::Vj;
+    /// use permu_rs::permutation::Permutation;
+    ///
+    /// let permu = Permutation::<u8>::from_vec(vec![3,2,1,0]).unwrap(); 
+    /// let ok_vj: Vj<u8> = Vj { vj : vec![3,2,1]};
+    /// let mut base: Vj<u8> = Vj { vj : vec![0,0,0] };
+    ///
+    /// permu.to_vj(&mut base);
+    ///
+    /// assert_eq!(ok_vj, base);
+    /// ```
+    pub fn to_vj(&self, out: &mut Vj<T>) -> Result<(), &'static str> {
+        Vj:: from_permu(&self, out)
+    }
+
+    /// Returns `Result` containing a `Permutation` based on the given `Permutation`.
+    ///
+    /// # Error
+    /// See `Vj::to:permu` Error section.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::vj::Vj;
+    /// use permu_rs::permutation::Permutation;
+    ///
+    /// let vj : Vj<u8> = Vj { vj : vec![0,0,0] }; // Base Vj
+    /// let ok_permu = Permutation::<u8>::identity(4); // Expected permutation
+    /// let mut permu = Permutation::<u8>::random(4); // Random permutation 
+    ///
+    /// Permutation::from_vj(&vj, &mut permu); // Fill permu based on vj 
+    ///
+    /// assert_eq!(ok_permu, permu);
+    /// 
+    /// ```
+    pub fn from_vj(vj: &Vj<T>, out: &mut Permutation<T>) -> Result<(), &'static str> {
+        Vj::to_permu(&vj,out)
+    }
 }
 
 #[cfg(test)]
@@ -170,6 +219,9 @@ mod tests_permu {
 }
 
 /// Population of `Permutations`.
+#[derive(PartialEq)]
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct PermuPopulation<T> {
     pub population : Vec<Permutation<T>>,
     pub size : usize,
@@ -180,7 +232,8 @@ impl<T> PermuPopulation<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    PartialEq<T> +
+    // PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
@@ -221,6 +274,24 @@ impl<T> PermuPopulation<T> where
 
         PermuPopulation {population: pop, size : size}
     }    
+    /// Creates a `PermuPopulation` of identity `Permutation`s.
+    /// The number of `Permutation`s in the returned `PermuPopulation` is given by
+    /// `size` parameter and the length of `Permutation`s is `length`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation as permu;
+    /// let population = permu::PermuPopulation::<u8>::identity(10, 5);
+    /// population.population.iter()
+    ///     .for_each(|p| assert_eq!(*p, permu::Permutation::<u8>::identity(5)));
+    /// ```
+    pub fn identity(size: usize, length: usize) -> PermuPopulation<T> {
+        let mut pop : Vec<Permutation<T>> = Vec::new(); 
+        (0..size).for_each(|_| pop.push(Permutation::identity(length)));
+
+        PermuPopulation { population : pop, size : size}
+        
+    }
     
     /// Initializes a `PermuPopulation` of random `Permutations` of the size and length given.
     ///
@@ -243,7 +314,8 @@ impl<T> Population for PermuPopulation<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    PartialEq<T> +
+    // PartialEq<T> +
+    Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
@@ -302,7 +374,6 @@ impl<T> Population for PermuPopulation<T> where
     /// Population::sample(&mut distr, &mut samples).unwrap();
     /// ```
     fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
-        
         // Check distribution and population's permus' sizes
         let length = match distr.distribution.len() == out.population[0].permu.len() {
             true => distr.distribution.len(),
@@ -319,15 +390,17 @@ impl<T> Population for PermuPopulation<T> where
             distr.soften = true;
         }
         
-        (0..out.size).for_each(|out_i| {
+        // let mut used_indx = Vec::<usize>::with_capacity(length);
 
+        (0..out.size).for_each(|out_i| {
+            
+            // used_indx.clear();
             let mut used_indx = Vec::<usize>::with_capacity(length);
 
             // let ref_permu = Permutation::<usize>::identity(length);
             let order = Permutation::<usize>::random(length);
             
             order.permu.iter().for_each(|ord| {
-                //println!("i (ref indx): {}", ord);
 
                 let (index_f, val_f) : (Vec<usize>, Vec<usize>) = distr.distribution[*ord].iter()
                     .enumerate()
@@ -339,12 +412,7 @@ impl<T> Population for PermuPopulation<T> where
 
                 let max: usize = val_f.iter().sum();
                 let rand: f64 = rand::thread_rng().gen_range(0.0, max as f64);
-                /*            
-                let v = val_f.iter() 
-                    .scan(0, |sum, v| Some(*sum+v))
-                    .zip(index_f.iter())
-                    .find(|(sum, index)| (*sum as f64) >= rand);
-                */
+
                 let mut i = 0;
                 let mut s = val_f[i];
                 while (s as f64) < rand {
@@ -361,7 +429,7 @@ impl<T> Population for PermuPopulation<T> where
             }); 
         });
         Ok(())
-    }
+    }        
 }
 
 #[cfg(test)]
