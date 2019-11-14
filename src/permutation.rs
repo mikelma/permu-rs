@@ -36,24 +36,19 @@ impl<T> Permutation<T> where
     /// Initializes a Permutation with the given vector. 
     ///
     /// # Errors
-    /// If the given vector is not a permutation the function will return an Error. 
+    /// If the given vector is not a permutation the function will return
+    /// a `NotPermutation` error. 
     ///
     /// # Example
     /// ```
-    /// use permu_rs::permutation::Permutation;
-    /// let vec : Vec<u16> = vec![0,1,2,3,4];
-    /// let permu = Permutation::from_vec(vec);
+    /// use permu_rs::permutation::{Permutation, NotPermutation};
+    /// 
+    /// let permu_ok = Permutation::<u8>::from_vec(vec![0,4,2,1,3]).unwrap();
+    ///
+    /// // Returns an error as the given vector is not a permutation
+    /// let permu_err = Permutation::<u8>::from_vec(vec![5,4,2,1,3]); 
+    /// assert!(permu_err.is_err());
     /// ```
-    /*
-    pub fn from_vec(vec: Vec<T>) -> Result<Permutation<T>, & 'static str> {
-        let permu = Permutation {permu : vec};
-        
-        match permu.is_permu() {
-            true => Ok(permu),
-            false => Err("The given vector is not a permutation"),
-        }
-    }
-    */
     pub fn from_vec(vec: Vec<T>) -> Result<Permutation<T>, NotPermutation> {
         let permu = Permutation {permu : vec};
         
