@@ -1,11 +1,6 @@
 name: rust-master
 
 on: [push]
-
-branches:
-    -master
-    -testing
-
 jobs:
   build:
 
