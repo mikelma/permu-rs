@@ -9,7 +9,7 @@ use std::error::Error;
 use rand::Rng;
 
 use crate::{Population, Distribution};
-use crate::vj::{Vj, VjPopulation};
+use crate::vj::{Vj, VjPopulation, LengthError};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]

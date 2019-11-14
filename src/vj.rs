@@ -1,6 +1,10 @@
 use std::convert::{TryFrom, TryInto};
 use rand::Rng;
-use std::fmt::{Debug, Display};
+
+use std::fmt;
+use fmt::{Debug, Display};
+
+use std::error::Error;
 
 use crate::permutation;
 
@@ -288,3 +292,23 @@ impl<T> VjPopulation<T> where
     }
 }
 
+/// Error type to return when transforming between representations and the 
+/// length of one of the vectors is not correct
+#[derive(Debug)]
+pub struct LengthError {
+    message: String,
+}
+
+impl LengthError {
+    pub fn new(m: String) -> LengthError {
+        LengthError { message : m }
+    }
+}
+
+impl fmt::Display for LengthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl Error for LengthError {}
