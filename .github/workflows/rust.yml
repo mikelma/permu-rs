@@ -1,4 +1,4 @@
-name: rust-master
+name: Rust
 
 on: [push]
 jobs:
