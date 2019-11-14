@@ -1,6 +1,10 @@
 use std::convert::TryFrom;
 use std::convert::TryInto;
-use std::fmt::{Debug, Display};
+
+use std::fmt;
+use fmt::{Debug, Display};
+
+use std::error::Error;
 
 use rand::Rng;
 
@@ -40,12 +44,22 @@ impl<T> Permutation<T> where
     /// let vec : Vec<u16> = vec![0,1,2,3,4];
     /// let permu = Permutation::from_vec(vec);
     /// ```
+    /*
     pub fn from_vec(vec: Vec<T>) -> Result<Permutation<T>, & 'static str> {
         let permu = Permutation {permu : vec};
         
         match permu.is_permu() {
             true => Ok(permu),
             false => Err("The given vector is not a permutation"),
+        }
+    }
+    */
+    pub fn from_vec(vec: Vec<T>) -> Result<Permutation<T>, NotPermutation> {
+        let permu = Permutation {permu : vec};
+        
+        match permu.is_permu() {
+            true => Ok(permu),
+            false => Err(NotPermutation),
         }
     }
 
@@ -451,3 +465,15 @@ mod test_learn {
         samples.population.iter().for_each(|p| println!("{:?}", p.permu));
     }
 }
+
+/// Error type to return when a `Permutation` is not an actual permutation.
+#[derive(Debug)]
+pub struct NotPermutation;
+
+impl fmt::Display for NotPermutation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "A not permutation found where permutation was expected")
+    }
+}
+
+impl Error for NotPermutation {}
