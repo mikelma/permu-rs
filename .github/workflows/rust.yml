@@ -1,9 +1,9 @@
 name: dev-build-test
 
 on:
-    push:
-        branches:
-            -testing 
+  push:
+    branches:
+      - testing
 jobs:
   build:
 
