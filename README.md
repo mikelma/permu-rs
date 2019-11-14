@@ -2,6 +2,7 @@
 A collection of utilities for permutations. It contains useful tools to create, manage and experiment with permutations.
 
 ![Build status](https://travis-ci.org/mikelma/permu-rs.svg?branch=master)
+![](https://github.com/mikelma/permu-rs/workflows/dev-build-test/badge.svg)
 
 ## Documentation
 You can find the documentation with examples [here](https://docs.rs/permu-rs).
