@@ -21,7 +21,7 @@ pub trait Population {
     fn learn(&self) -> Distribution;
 
     /// Fills a given `out` population with samples sampled from a given `distr` `Distribution`. 
-    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Box<Error>>;
+    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Box<dyn Error>>;
 }
 
 /// Probability distribution. 
