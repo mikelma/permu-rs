@@ -185,7 +185,7 @@ impl<T> Permutation<T> where
     ///
     /// assert_eq!(ok_vj, base);
     /// ```
-    pub fn to_vj(&self, out: &mut Vj<T>) -> Result<(), &'static str> {
+    pub fn to_vj(&self, out: &mut Vj<T>) -> Result<(), LengthError> {
         Vj:: from_permu(&self, out)
     }
 
@@ -208,7 +208,7 @@ impl<T> Permutation<T> where
     /// assert_eq!(ok_permu, permu);
     /// 
     /// ```
-    pub fn from_vj(vj: &Vj<T>, out: &mut Permutation<T>) -> Result<(), &'static str> {
+    pub fn from_vj(vj: &Vj<T>, out: &mut Permutation<T>) -> Result<(), LengthError> {
         Vj::to_permu(&vj,out)
     }
 }
@@ -386,7 +386,7 @@ impl<T> Population for PermuPopulation<T> where
     /// let mut distr = pop.learn();
     /// Population::sample(&mut distr, &mut samples).unwrap();
     /// ```
-    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Box<Error>> {
+    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Box<dyn Error>> {
         // Check distribution and population's permus' sizes
         let length = match distr.distribution.len() == out.population[0].permu.len() {
             true => distr.distribution.len(),
