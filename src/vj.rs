@@ -58,8 +58,7 @@ impl<T> Vj<T> where
     ///
     /// # Errors
     /// The length of the `Vj` must be the size of the `Permutation` - 1. Otherwise, 
-    /// the function will return an error. Also, if a type conversion error happens,
-    /// the method returns an `Error`.
+    /// the function will return a `LengthError`.
     ///
     /// # Example
     /// ```
@@ -69,11 +68,11 @@ impl<T> Vj<T> where
     /// vj::Vj::from_permu(&permu, &mut vj_repr).unwrap();
     /// assert_eq!(vec![0,2,1], vj_repr.vj);
     /// ```
-    pub fn from_permu(permu: &permutation::Permutation<T>, vj: &mut Vj<T>) -> Result<(), &'static str>{
+    pub fn from_permu(permu: &permutation::Permutation<T>, vj: &mut Vj<T>) -> Result<(), LengthError>{
         
         // Check if sizes are correct
         if permu.permu.len()-1 != vj.vj.len() {
-            return Err("Lenght of the vj vector must be permu.len()-1");
+            return Err(LengthError::new());
         }
 
         for index in 0..vj.vj.len() {
@@ -88,7 +87,7 @@ impl<T> Vj<T> where
                 // This will never fail, as the boundaries of T are always respected
                 vj.vj[index] = match T::try_from(n) {
                     Ok(v) => v,
-                    Err(_) => return Err("Error while coverting usize to T"),
+                    Err(_) => panic!("Fatal conversion error"),
                 };
             }
         }
@@ -99,7 +98,7 @@ impl<T> Vj<T> where
     ///
     /// # Errors
     /// The length of the `Vj` must be the size of the `Permutation` - 1. Otherwise, 
-    /// the function will return an error.
+    /// the function will return a `LengthError` error.
     ///
     /// # Example
     /// ```
@@ -109,11 +108,11 @@ impl<T> Vj<T> where
     /// vj.to_permu(&mut permu).unwrap();
     /// assert_eq!(vec![0,3,2,1], permu.permu);
     /// ```
-    pub fn to_permu(&self, out: &mut permutation::Permutation<T>) -> Result<(), &'static str> {
+    pub fn to_permu(&self, out: &mut permutation::Permutation<T>) -> Result<(), LengthError> {
          
         // Check if sizes are correct
         if out.permu.len()-1 != self.vj.len() {
-            return Err("Lenght of the vj vector must be permu.len()-1");
+            return Err(LengthError::new());
         }
 
         let permu = &mut out.permu;
@@ -139,13 +138,13 @@ impl<T> Vj<T> where
                     .enumerate()
                     .find(|(i, _)| *vj_val == match T::try_from(*i) {
                         Ok(v) => v,
-                        Err(_) => panic!("This should not fail"),
+                        Err(_) => panic!("fatal conversion error"),
                     });
                 
                 // This will never fail as the boundaries of T are always respected here
                 let (remove_index, value) = match value {
                     Some(a) => a,
-                    None => panic!("Conversion error"),
+                    None => panic!("Fatal conversion error"),
                 };
                 
                 permu[index] = *value;
@@ -210,8 +209,8 @@ impl<T> VjPopulation<T> where
     /// done respecting the positions in the population.
     ///
     /// # Errors
-    /// Returns an error if the size of both `Populations` are not equal. Also, the method will 
-    /// return an error if the length of the  `Permutations` in `PermuPopulation` are not the
+    /// Returns a `LengthError` if the size of both `Populations` are not equal. Also, the method will 
+    /// return another `LengthError` if the length of the  `Permutations` in `PermuPopulation` are not the
     /// length of the `Vj` - 1.
     ///
     /// # Panics
@@ -232,16 +231,18 @@ impl<T> VjPopulation<T> where
     ///
     /// assert_eq!(out_pop, identity_pop);
     /// ```
-    pub fn to_permus(&self, permu_pop: &mut permutation::PermuPopulation<T>) -> Result<(), &'static str> {
+    pub fn to_permus(&self, permu_pop: &mut permutation::PermuPopulation<T>) -> Result<(), LengthError> {
 
         // Check if for every Vj is a Permutation in permu_pop
         if permu_pop.size != self.size {
-            return Err("VjPopulation and the given PermuPopulation sizes must be equal");
+            return Err(LengthError::from(String::from(
+                "VjPopulation and the given PermuPopulation sizes must be equal")));
         }
 
         // Check Permutation and Vj lengths are compatible
         if permu_pop.population[0].permu.len() != self.population[0].vj.len()+1 {
-            return Err("The length of Permutations from PermuPopulation must be the length of Vjs+1");
+            return Err(LengthError::from(String::from(
+                "The length of Permutations from PermuPopulation must be the length of Vjs+1")));
         }
         
         // Convert each Vj of the population to permutation 
@@ -260,6 +261,7 @@ impl<T> VjPopulation<T> where
     ///
     /// # Panics 
     /// The function panics if the internal `Vj::from_permu` returns an `Error`.
+    /// This will happen if a type conversion error occurs.
     ///
     /// # Example
     /// ```
@@ -279,7 +281,7 @@ impl<T> VjPopulation<T> where
     /// ```
     ///
     pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>, 
-                       vjs: &mut VjPopulation<T>) -> Result<(), &'static str> {
+                       vjs: &mut VjPopulation<T>) {
         
         permu_pop.population.iter()
             .enumerate()
@@ -287,8 +289,6 @@ impl<T> VjPopulation<T> where
                 Ok(_) => (),
                 Err(e) => panic!(e),
             }});
-
-        Ok(())
     }
 }
 
