@@ -301,10 +301,22 @@ pub struct LengthError {
 
 impl LengthError {
 
+    /// Creates a `LengthError` object with the default error messge.
+    /// # Example
+    /// ```
+    /// use permu_rs::LengthError;
+    /// let my_error = LengthError::new();
+    /// ```
     pub fn new() -> LengthError {
         LengthError { message : None }
     }
-
+    
+    /// Creates a `LengthError` object including a given custom error message.
+    /// # Example
+    /// ```
+    /// use permu_rs::LengthError;
+    /// let my_error = LengthError::from(String::from("Super custom message"));
+    /// ```
     pub fn from(m: String) -> LengthError {
         LengthError { message : Some(m) }
     }
