@@ -370,8 +370,12 @@ impl<T> Population for PermuPopulation<T> where
     }
 
     /// Implementation of `sample` method for `PermuPopulation`.
+    /// 
+    /// # Errors
+    /// Returns a `LengthError` if the length of the `Permutation`s are
+    /// not the length of `Vj`s - 1.
     ///
-    /// Example
+    /// # Example
     ///
     /// ```
     /// use permu_rs::permutation::PermuPopulation;
@@ -382,12 +386,15 @@ impl<T> Population for PermuPopulation<T> where
     /// let mut distr = pop.learn();
     /// Population::sample(&mut distr, &mut samples).unwrap();
     /// ```
-    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), &'static str> {
+    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Box<Error>> {
         // Check distribution and population's permus' sizes
         let length = match distr.distribution.len() == out.population[0].permu.len() {
             true => distr.distribution.len(),
-            false => return Err("The size of the given distribution does not match 
-                                with the length of the permutations to sample"),
+            false => {return Err(Box::new(
+                        LengthError::from(String::from( "The size of the given distribution 
+                            does not match with the length of the permutations to sample"))
+                        ))
+            },
         };
         
         // Check if the distribution is soften 
