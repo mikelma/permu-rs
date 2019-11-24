@@ -467,7 +467,7 @@ pub struct NotPermutation;
 
 impl fmt::Display for NotPermutation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "A not permutation found where permutation was expected")
+        write!(f, "Permutation expected but no permutation found")
     }
 }
 
