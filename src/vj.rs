@@ -296,18 +296,26 @@ impl<T> VjPopulation<T> where
 /// length of one of the vectors is not correct
 #[derive(Debug)]
 pub struct LengthError {
-    message: String,
+    message: Option<String>,
 }
 
 impl LengthError {
-    pub fn new(m: String) -> LengthError {
-        LengthError { message : m }
+
+    pub fn new() -> LengthError {
+        LengthError { message : None }
+    }
+
+    pub fn from(m: String) -> LengthError {
+        LengthError { message : Some(m) }
     }
 }
 
 impl fmt::Display for LengthError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.message)
+        match &self.message {
+            Some(m) => write!(f, "{}", m),
+            None => write!(f, "Please check the lengths or shapes of the given arguments"),
+        }
     }
 }
 
