@@ -9,11 +9,11 @@ use std::fmt;
 
 // Import modules
 pub mod permutation;
-pub mod vj;
+pub mod inversion;
 
 // Import errors
 pub use permutation::NotPermutation;
-pub use vj::LengthError;
+pub use inversion::LengthError;
 
 /// Contains the methods a `Population` should have.
 pub trait Population {
@@ -31,8 +31,8 @@ pub trait Population {
 pub enum Distribution {
     /// Probability distribution for permutation populations
     PermuDistribution(Vec<Vec<usize>>, bool),
-    /// Probability distribution for Vj populations
-    VjDistribution(Vec<Vec<usize>>, bool),
+    /// Probability distribution for Inversion populations
+    InversionDistribution(Vec<Vec<usize>>, bool),
 }
 
 #[derive(Debug)]

@@ -9,7 +9,7 @@ use std::error::Error;
 use rand::Rng;
 
 use crate::{Population, Distribution, IncorrectDistrType};
-use crate::vj::{Vj, VjPopulation, LengthError};
+use crate::inversion::{Inversion, InversionPopulation, LengthError};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
@@ -167,52 +167,52 @@ impl<T> Permutation<T> where
         })
     }
     
-    /// Returns `Result` containing a `Vj` based on the `Permutation`.
+    /// Returns `Result` containing a `Inversion` based on the `Permutation`.
     ///
     /// # Error
-    /// See `Vj::from_permu` Error section.
+    /// See `Inversion::from_permu` Error section.
     ///
     /// # Example
     /// ```
-    /// use permu_rs::vj::Vj;
+    /// use permu_rs::inversion::Inversion;
     /// use permu_rs::permutation::Permutation;
     ///
     /// let permu = Permutation::<u8>::from_vec(vec![3,2,1,0]).unwrap(); 
-    /// let ok_vj: Vj<u8> = Vj { vj : vec![3,2,1]};
-    /// let mut base: Vj<u8> = Vj { vj : vec![0,0,0] };
+    /// let ok_inversion: Inversion<u8> = Inversion { inversion : vec![3,2,1]};
+    /// let mut base: Inversion<u8> = Inversion { inversion : vec![0,0,0] };
     ///
-    /// permu.to_vj(&mut base);
+    /// permu.to_inversion(&mut base);
     ///
-    /// assert_eq!(ok_vj, base);
+    /// assert_eq!(ok_inversion, base);
     /// ```
-    pub fn to_vj(&self, out: &mut Vj<T>) -> Result<(), LengthError> {
-        Vj:: from_permu(&self, out)
+    pub fn to_inversion(&self, out: &mut Inversion<T>) -> Result<(), LengthError> {
+        Inversion:: from_permu(&self, out)
     }
 
     /// Returns `Result` containing a `Permutation` based on the given `Permutation`.
     ///
     /// # Error
-    /// See `Vj::to:permu` Error section.
+    /// See `Inversion::to:permu` Error section.
     ///
     /// # Example
     /// ```
-    /// use permu_rs::vj::Vj;
+    /// use permu_rs::inversion::Inversion;
     /// use permu_rs::permutation::Permutation;
     ///
-    /// let vj : Vj<u8> = Vj { vj : vec![0,0,0] }; // Base Vj
+    /// let inversion : Inversion<u8> = Inversion { inversion : vec![0,0,0] }; // Base Inversion
     /// let ok_permu = Permutation::<u8>::identity(4); // Expected permutation
     /// let mut permu = Permutation::<u8>::random(4); // Random permutation 
     ///
-    /// Permutation::from_vj(&vj, &mut permu); // Fill permu based on vj 
+    /// Permutation::from_inversion(&inversion, &mut permu); // Fill permu based on inversion 
     ///
     /// assert_eq!(ok_permu, permu);
     /// 
     /// ```
-    pub fn from_vj(vj: &Vj<T>, out: &mut Permutation<T>) -> Result<(), LengthError> {
-        Vj::to_permu(&vj,out)
+    pub fn from_inversion(inversion: &Inversion<T>, out: &mut Permutation<T>) -> Result<(), LengthError> {
+        Inversion::to_permu(&inversion,out)
     }
 }
-
+/*
 #[cfg(test)]
 mod tests_permu {
 
@@ -226,6 +226,7 @@ mod tests_permu {
         }
     }
 }
+*/
 
 /// Implementation for permutation probability distribution. 
 /*
@@ -386,7 +387,7 @@ impl<T> Population for PermuPopulation<T> where
     /// 
     /// # Errors
     /// Returns a `LengthError` if the length of the `Permutation`s are
-    /// not the length of `Vj`s - 1. Returns an `IncorrectDistrType` error if
+    /// not the length of `Inversion`s - 1. Returns an `IncorrectDistrType` error if
     /// the given distribution is not `PermuDistribution`.
     ///
     /// # Example

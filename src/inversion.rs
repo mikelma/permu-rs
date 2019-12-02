@@ -8,15 +8,15 @@ use std::error::Error;
 
 use crate::permutation;
 
-/// Contains a Vj vector and method to generate and trasnform them.
+/// Contains a Inversion vector and method to generate and trasnform them.
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(PartialEq)]
-pub struct Vj<T> {
-    pub vj : Vec<T>,
+pub struct Inversion<T> {
+    pub inversion : Vec<T>,
 }
 
-impl<T> Vj<T> where 
+impl<T> Inversion<T> where 
     T : Copy +
     From<u8> +
     TryFrom<usize> +
@@ -31,51 +31,51 @@ impl<T> Vj<T> where
     Debug // NOTE : For debugging
 {
 
-    /// Creates a Vj object from the vector.
+    /// Creates a Inversion object from the vector.
     ///
     /// # Example
     /// ```
-    /// use permu_rs::vj::Vj;
-    /// let vj_vec = vec![0,0,1,1,4];
-    /// let my_vj = Vj::<u8>::from_vec(vj_vec);
+    /// use permu_rs::inversion::Inversion;
+    /// let inversion_vec = vec![0,0,1,1,4];
+    /// let my_inversion = Inversion::<u8>::from_vec(inversion_vec);
     /// ```
-    pub fn from_vec(vec : Vec<T>) -> Vj<T> {
-        Vj { vj : vec }        
+    pub fn from_vec(vec : Vec<T>) -> Inversion<T> {
+        Inversion { inversion : vec }        
     }
 
-    /// Creates a Vj filled with 0s. 
+    /// Creates a Inversion filled with 0s. 
     ///
     /// # Example
     /// ```
-    /// use permu_rs::vj::Vj;
-    /// assert_eq!(vec![0,0,0], Vj::<u8>::zeros(3).vj);
+    /// use permu_rs::inversion::Inversion;
+    /// assert_eq!(vec![0,0,0], Inversion::<u8>::zeros(3).inversion);
     /// ```
-    pub fn zeros(length: usize) -> Vj<T> {
-        Vj { vj : vec![T::from(0u8); length] }
+    pub fn zeros(length: usize) -> Inversion<T> {
+        Inversion { inversion : vec![T::from(0u8); length] }
     }
     
-    /// Fills a given `Vj` with the vj representation of the given `Permutation`.
+    /// Fills a given `Inversion` with the inversion representation of the given `Permutation`.
     ///
     /// # Errors
-    /// The length of the `Vj` must be the size of the `Permutation` - 1. Otherwise, 
+    /// The length of the `Inversion` must be the size of the `Permutation` - 1. Otherwise, 
     /// the function will return a `LengthError`.
     ///
     /// # Example
     /// ```
     /// use permu_rs::*;
     /// let permu = permutation::Permutation::<u8>::from_vec(vec![0,3,2,1]).unwrap();
-    /// let mut vj_repr = vj::Vj::zeros(3);
-    /// vj::Vj::from_permu(&permu, &mut vj_repr).unwrap();
-    /// assert_eq!(vec![0,2,1], vj_repr.vj);
+    /// let mut inversion_repr = inversion::Inversion::zeros(3);
+    /// inversion::Inversion::from_permu(&permu, &mut inversion_repr).unwrap();
+    /// assert_eq!(vec![0,2,1], inversion_repr.inversion);
     /// ```
-    pub fn from_permu(permu: &permutation::Permutation<T>, vj: &mut Vj<T>) -> Result<(), LengthError>{
+    pub fn from_permu(permu: &permutation::Permutation<T>, inversion: &mut Inversion<T>) -> Result<(), LengthError>{
         
         // Check if sizes are correct
-        if permu.permu.len()-1 != vj.vj.len() {
+        if permu.permu.len()-1 != inversion.inversion.len() {
             return Err(LengthError::new());
         }
 
-        for index in 0..vj.vj.len() {
+        for index in 0..inversion.inversion.len() {
 
             let mut n = 0;
             for i in index..permu.permu.len() {
@@ -85,7 +85,7 @@ impl<T> Vj<T> where
                 }            
 
                 // This will never fail, as the boundaries of T are always respected
-                vj.vj[index] = match T::try_from(n) {
+                inversion.inversion[index] = match T::try_from(n) {
                     Ok(v) => v,
                     Err(_) => panic!("Fatal conversion error"),
                 };
@@ -94,29 +94,29 @@ impl<T> Vj<T> where
         Ok(())
     } 
 
-    /// Returns a `Permutation` created from the `Vj` representation.
+    /// Returns a `Permutation` created from the `Inversion` representation.
     ///
     /// # Errors
-    /// The length of the `Vj` must be the size of the `Permutation` - 1. Otherwise, 
+    /// The length of the `Inversion` must be the size of the `Permutation` - 1. Otherwise, 
     /// the function will return a `LengthError` error.
     ///
     /// # Example
     /// ```
     /// use permu_rs::*;
-    /// let vj = vj::Vj::<u8>::from_vec(vec![0,2,1]);
+    /// let inversion = inversion::Inversion::<u8>::from_vec(vec![0,2,1]);
     /// let mut permu = permutation::Permutation::<u8>::identity(4);
-    /// vj.to_permu(&mut permu).unwrap();
+    /// inversion.to_permu(&mut permu).unwrap();
     /// assert_eq!(vec![0,3,2,1], permu.permu);
     /// ```
     pub fn to_permu(&self, out: &mut permutation::Permutation<T>) -> Result<(), LengthError> {
          
         // Check if sizes are correct
-        if out.permu.len()-1 != self.vj.len() {
+        if out.permu.len()-1 != self.inversion.len() {
             return Err(LengthError::new());
         }
 
         let permu = &mut out.permu;
-        let vj = &self.vj;
+        let inversion = &self.inversion;
         let size = permu.len();
         
         // Create T identity
@@ -129,14 +129,14 @@ impl<T> Vj<T> where
             }) 
         });
 
-        vj.iter().chain([T::from(0u8)].iter()) // Create a Vj iterator and append 0 element to it
+        inversion.iter().chain([T::from(0u8)].iter()) // Create a Inversion iterator and append 0 element to it
             .enumerate()
-            .for_each(|(index, vj_val)| {
+            .for_each(|(index, inversion_val)| {
 
-                // Get the value and index of element in e[vj_val]
+                // Get the value and index of element in e[inversion_val]
                 let value = e.iter()
                     .enumerate()
-                    .find(|(i, _)| *vj_val == match T::try_from(*i) {
+                    .find(|(i, _)| *inversion_val == match T::try_from(*i) {
                         Ok(v) => v,
                         Err(_) => panic!("fatal conversion error"),
                     });
@@ -155,16 +155,16 @@ impl<T> Vj<T> where
     } 
 }
 
-/// Population of Vj objects. Includes initilializers and transformation tools.
+/// Population of Inversion objects. Includes initilializers and transformation tools.
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
-pub struct VjPopulation<T> {
-    pub population : Vec<Vj<T>>,
+pub struct InversionPopulation<T> {
+    pub population : Vec<Inversion<T>>,
     pub size : usize,
 }
 
-impl<T> VjPopulation<T> where 
+impl<T> InversionPopulation<T> where 
     T : Copy +
     From<u8> +
     TryFrom<usize> +
@@ -178,43 +178,43 @@ impl<T> VjPopulation<T> where
     Display + // NOTE : For debugging
     Debug, // NOTE : For debugging
 {
-    /// Creates a `VjPopulation` of the size given with `Vj`s of length specified, filled with 0s. 
+    /// Creates a `InversionPopulation` of the size given with `Inversion`s of length specified, filled with 0s. 
     /// This population represents a population of identity permutations.
     ///
     /// # Example
     /// ```
     /// use permu_rs::*;
     /// use permutation::{Permutation, PermuPopulation};
-    /// use vj::{Vj, VjPopulation};
+    /// use inversion::{Inversion, InversionPopulation};
     ///
     /// let (size, length) = (20,10);
     /// let identity = PermuPopulation::from_vec(vec![Permutation::<u8>::identity(length);size]);
-    /// let vjs = VjPopulation::<u8>::zeros(size,length-1);
+    /// let inversions = InversionPopulation::<u8>::zeros(size,length-1);
     /// let mut permus = PermuPopulation::<u8>::zeros(size, length);
     ///
-    /// vjs.to_permus(&mut permus);
+    /// inversions.to_permus(&mut permus);
     /// assert_eq!(identity, permus);
     /// ```
-    pub fn zeros(size: usize, length: usize) -> VjPopulation<T> {
-        let mut population: Vec<Vj<T>> = Vec::with_capacity(size); 
+    pub fn zeros(size: usize, length: usize) -> InversionPopulation<T> {
+        let mut population: Vec<Inversion<T>> = Vec::with_capacity(size); 
         let zeros = vec![T::from(0u8);length];
 
-        (0..size).for_each(|_| population.push(Vj::from_vec(zeros.clone())));
+        (0..size).for_each(|_| population.push(Inversion::from_vec(zeros.clone())));
         
-        VjPopulation { population, size }
+        InversionPopulation { population, size }
     }
     
-    /// Transforms the `Vj` to its `Permutation` representation. Fills a given `PermuPopulation`
-    /// based on the `Vj`s from the `VjPopulation`. The `Vj` -> `Permutation` transformation is 
+    /// Transforms the `Inversion` to its `Permutation` representation. Fills a given `PermuPopulation`
+    /// based on the `Inversion`s from the `InversionPopulation`. The `Inversion` -> `Permutation` transformation is 
     /// done respecting the positions in the population.
     ///
     /// # Errors
     /// Returns a `LengthError` if the size of both `Populations` are not equal. Also, the method will 
     /// return another `LengthError` if the length of the  `Permutations` in `PermuPopulation` are not the
-    /// length of the `Vj` - 1.
+    /// length of the `Inversion` - 1.
     ///
     /// # Panics
-    /// The mothod will panic if a `Vj` of the `VjPopulation` has not a `Permutation`
+    /// The mothod will panic if a `Inversion` of the `InversionPopulation` has not a `Permutation`
     /// representation.
     ///
     /// # Example
@@ -225,67 +225,67 @@ impl<T> VjPopulation<T> where
     /// let mut out_pop = permutation::PermuPopulation::<u8>::zeros(size, length); // Output permutation
     ///
     /// let identity_pop = permutation::PermuPopulation::<u8>::identity(size, length);
-    /// let vjs = vj::VjPopulation::<u8>:: zeros(size, length-1);
+    /// let inversions = inversion::InversionPopulation::<u8>:: zeros(size, length-1);
     ///
-    /// vjs.to_permus(&mut out_pop);
+    /// inversions.to_permus(&mut out_pop);
     ///
     /// assert_eq!(out_pop, identity_pop);
     /// ```
     pub fn to_permus(&self, permu_pop: &mut permutation::PermuPopulation<T>) -> Result<(), LengthError> {
 
-        // Check if for every Vj is a Permutation in permu_pop
+        // Check if for every Inversion is a Permutation in permu_pop
         if permu_pop.size != self.size {
             return Err(LengthError::from(String::from(
-                "VjPopulation and the given PermuPopulation sizes must be equal")));
+                "InversionPopulation and the given PermuPopulation sizes must be equal")));
         }
 
-        // Check Permutation and Vj lengths are compatible
-        if permu_pop.population[0].permu.len() != self.population[0].vj.len()+1 {
+        // Check Permutation and Inversion lengths are compatible
+        if permu_pop.population[0].permu.len() != self.population[0].inversion.len()+1 {
             return Err(LengthError::from(String::from(
-                "The length of Permutations from PermuPopulation must be the length of Vjs+1")));
+                "The length of Permutations from PermuPopulation must be the length of Inversions+1")));
         }
         
-        // Convert each Vj of the population to permutation 
+        // Convert each Inversion of the population to permutation 
         (0..self.size).for_each(|i| {
             match self.population[i].to_permu(&mut permu_pop.population[i]) {
                 Ok(_) => (),
-                Err(e) => panic!("Fatal error converting VjPopulation to PermuPopulation: {}", e),
+                Err(e) => panic!("Fatal error converting InversionPopulation to PermuPopulation: {}", e),
             }
         });
         Ok(())
     }
     
-    /// Fills an existing `VjPopulation` with `Vj`s based on `Permutations` in a given
-    /// `PermuPopulation`. The `Permutation` -> `Vj` transformation is done 
+    /// Fills an existing `InversionPopulation` with `Inversion`s based on `Permutations` in a given
+    /// `PermuPopulation`. The `Permutation` -> `Inversion` transformation is done 
     /// respecting the positions in the population.
     ///
     /// # Panics 
-    /// The function panics if the internal `Vj::from_permu` returns an `Error`.
+    /// The function panics if the internal `Inversion::from_permu` returns an `Error`.
     /// This will happen if a type conversion error occurs.
     ///
     /// # Example
     /// ```
     /// use permu_rs::permutation::{Permutation, PermuPopulation};
-    /// use permu_rs::vj::{Vj, VjPopulation};
+    /// use permu_rs::inversion::{Inversion, InversionPopulation};
     ///
     /// let (size, length) = (5, 4);
     ///
-    /// let mut population = vec![Vj::<u16>::from_vec(vec![1,0,0]); size];
-    /// let mut vjs = VjPopulation{ population, size };
+    /// let mut population = vec![Inversion::<u16>::from_vec(vec![1,0,0]); size];
+    /// let mut inversions = InversionPopulation{ population, size };
     ///
-    /// let vj_ok = VjPopulation::<u16>::zeros(size, length-1); // Correct result
+    /// let inversion_ok = InversionPopulation::<u16>::zeros(size, length-1); // Correct result
     /// let permus = PermuPopulation::<u16>::identity(size, length);
     ///
-    /// VjPopulation::from_permus(&permus, &mut vjs);
-    /// assert_eq!(vj_ok, vjs);
+    /// InversionPopulation::from_permus(&permus, &mut inversions);
+    /// assert_eq!(inversion_ok, inversions);
     /// ```
     ///
     pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>, 
-                       vjs: &mut VjPopulation<T>) {
+                       inversions: &mut InversionPopulation<T>) {
         
         permu_pop.population.iter()
             .enumerate()
-            .for_each(|(i, permu)| { match Vj::from_permu(permu, &mut vjs.population[i]) {
+            .for_each(|(i, permu)| { match Inversion::from_permu(permu, &mut inversions.population[i]) {
                 Ok(_) => (),
                 Err(e) => panic!(e),
             }});
