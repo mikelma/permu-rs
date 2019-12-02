@@ -5,6 +5,7 @@
 //! bijective-transformations.
 
 use std::error::Error;
+use std::fmt;
 
 // Import modules
 pub mod permutation;
@@ -25,7 +26,31 @@ pub trait Population {
 }
 
 /// Probability distribution. 
-pub struct Distribution {
-    pub distribution : Vec<Vec<usize>>,
-    pub soften : bool,
+#[derive(Debug)]
+#[derive(PartialEq)]
+pub enum Distribution {
+    PermuDistribution(Vec<Vec<usize>>, bool),
+    VjDistribution(Vec<Vec<usize>>, bool),
 }
+/*
+impl Distribution {
+
+    pub fn get_distribution(&self) -> Result<RefCell<Vec<Vec<usize>>>, EmptyDistribution> {
+
+        match self {
+            Distribution::PermuPopulation(distr, _) => RefCell::new(distr),
+        }
+    }
+}
+*/
+
+#[derive(Debug)]
+pub struct IncorrectDistrType;
+
+impl fmt::Display for IncorrectDistrType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Incorrect distribution given")
+    }
+}
+
+impl Error for IncorrectDistrType {}

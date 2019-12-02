@@ -8,7 +8,7 @@ use std::error::Error;
 
 use rand::Rng;
 
-use crate::{Population, Distribution};
+use crate::{Population, Distribution, IncorrectDistrType};
 use crate::vj::{Vj, VjPopulation, LengthError};
 
 /// Contains a permutation vector and methods to generate permutations.
@@ -227,6 +227,16 @@ mod tests_permu {
     }
 }
 
+/// Implementation for permutation probability distribution. 
+/*
+pub struct PermuDistribution {
+    pub distribution : Vec<Vec<usize>>,
+    pub soften : bool,
+}
+
+impl Distribution for PermuDistribution {}
+*/
+
 /// Population of `Permutations`.
 #[derive(PartialEq)]
 #[derive(Debug)]
@@ -348,7 +358,9 @@ impl<T> Population for PermuPopulation<T> where
     ///                   vec![0,1,1,0],
     ///                   vec![1,0,1,0],
     ///                   vec![0,0,0,2]];
-    /// assert_eq!(target, distr.distribution);
+    ///
+    /// let target = Distribution::PermuDistribution(target, false);
+    /// assert_eq!(target, distr);
     /// ```
     ///
     // NOTE: (i : positions, j : values)
@@ -366,14 +378,16 @@ impl<T> Population for PermuPopulation<T> where
                 distr[j][e] += 1;
             })
         });
-        Distribution { distribution : distr , soften : false }
-    }
 
+        Distribution::PermuDistribution(distr, false)
+    }
+    
     /// Implementation of `sample` method for `PermuPopulation`.
     /// 
     /// # Errors
     /// Returns a `LengthError` if the length of the `Permutation`s are
-    /// not the length of `Vj`s - 1.
+    /// not the length of `Vj`s - 1. Returns an `IncorrectDistrType` error if
+    /// the given distribution is not `PermuDistribution`.
     ///
     /// # Example
     ///
@@ -383,13 +397,21 @@ impl<T> Population for PermuPopulation<T> where
     ///
     /// let pop = PermuPopulation::<u8>::random(1, 5); // Population to learn from
     /// let mut samples = PermuPopulation::<u8>::zeros(10, 5); // Population to fill with samples
+    /// 
     /// let mut distr = pop.learn();
+    ///
     /// Population::sample(&mut distr, &mut samples).unwrap();
     /// ```
     fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Box<dyn Error>> {
+        
+        let (distr, soften) = match distr {
+            Distribution::PermuDistribution(d, s) => (d, s),
+            _ => return Err(Box::new(IncorrectDistrType)), 
+        };
+
         // Check distribution and population's permus' sizes
-        let length = match distr.distribution.len() == out.population[0].permu.len() {
-            true => distr.distribution.len(),
+        let length = match distr.len() == out.population[0].permu.len() {
+            true => distr.len(),
             false => {return Err(Box::new(
                         LengthError::from(String::from( "The size of the given distribution 
                             does not match with the length of the permutations to sample"))
@@ -398,12 +420,12 @@ impl<T> Population for PermuPopulation<T> where
         };
         
         // Check if the distribution is soften 
-        if !distr.soften {
+        if !*soften {
             // If not, soften the distribution by adding one to every element of the matrix
-            distr.distribution = distr.distribution.iter()
+            *distr = distr.iter()
                 .map(|row| row.iter().map(|x| x+1).collect())
                 .collect();
-            distr.soften = true;
+            *soften = true;
         }
         
         // let mut used_indx = Vec::<usize>::with_capacity(length);
@@ -417,8 +439,7 @@ impl<T> Population for PermuPopulation<T> where
             let order = Permutation::<usize>::random(length);
             
             order.permu.iter().for_each(|ord| {
-
-                let (index_f, val_f) : (Vec<usize>, Vec<usize>) = distr.distribution[*ord].iter()
+                let (index_f, val_f) : (Vec<usize>, Vec<usize>) = distr[*ord].iter()
                     .enumerate()
                     .filter(|(index, _)|            // Skip the values already existing in the permutation
                         used_indx.iter() 
