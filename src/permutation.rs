@@ -469,6 +469,7 @@ impl<T> Population for PermuPopulation<T> where
     }        
 }
 
+/*
 #[cfg(test)]
 mod test_learn {
     use crate::permutation::PermuPopulation;
@@ -488,6 +489,7 @@ mod test_learn {
         samples.population.iter().for_each(|p| println!("{:?}", p.permu));
     }
 }
+*/
 
 /// Error type to return when a `Permutation` is not an actual permutation.
 #[derive(Debug)]
