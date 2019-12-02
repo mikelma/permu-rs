@@ -25,26 +25,18 @@ pub trait Population {
     fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Box<dyn Error>>;
 }
 
-/// Probability distribution. 
+/// Enum for different probability distribution types. 
 #[derive(Debug)]
 #[derive(PartialEq)]
 pub enum Distribution {
+    /// Probability distribution for permutation populations
     PermuDistribution(Vec<Vec<usize>>, bool),
+    /// Probability distribution for Vj populations
     VjDistribution(Vec<Vec<usize>>, bool),
 }
-/*
-impl Distribution {
-
-    pub fn get_distribution(&self) -> Result<RefCell<Vec<Vec<usize>>>, EmptyDistribution> {
-
-        match self {
-            Distribution::PermuPopulation(distr, _) => RefCell::new(distr),
-        }
-    }
-}
-*/
 
 #[derive(Debug)]
+/// Error to return when an incorrect `Distribution` type is given.
 pub struct IncorrectDistrType;
 
 impl fmt::Display for IncorrectDistrType {
