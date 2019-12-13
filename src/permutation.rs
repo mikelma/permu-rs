@@ -327,6 +327,29 @@ impl<T> PermuPopulation<T> where
         (0..size).for_each(|_| pop.push(Permutation::random(length)) ); // Generate
         PermuPopulation { population : pop, size : size}
     }
+    
+    /// Fills a given `InversionPopulation` with `inversion` representations from the
+    /// `PermuPopulation`. 
+    /// 
+    /// # Errors
+    /// Returns a `LengthError` if the size of both populations are not equal.
+    ///
+    /// # Panics
+    /// If the length of `inversion` are not the length of `Permutation`s - 1.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::PermuPopulation;
+    /// use permu_rs::inversion::InversionPopulation;
+    /// let (size, length) = (20,10);
+    /// let permus = PermuPopulation::<u8>::random(size, length);
+    /// let mut inv = InversionPopulation::zeros(size, length-1); // Init inv vector population
+    /// permus.to_inversion(&mut inv).unwrap();
+    /// ```
+    pub fn to_inversion(&self, inv_pop: &mut InversionPopulation<T>) -> Result<(), LengthError> {
+        InversionPopulation::from_permus(&self, inv_pop)?;
+        Ok(()) 
+    } 
 }
 
 impl<T> Population for PermuPopulation<T> where 

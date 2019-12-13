@@ -209,9 +209,7 @@ impl<T> InversionPopulation<T> where
     /// done respecting the positions in the population.
     ///
     /// # Errors
-    /// Returns a `LengthError` if the size of both `Populations` are not equal. Also, the method will 
-    /// return another `LengthError` if the length of the  `Permutations` in `PermuPopulation` are not the
-    /// length of the `Inversion` - 1.
+    /// Returns a `LengthError` if the size of both `Populations` are not equal. 
     ///
     /// # Panics
     /// The mothod will panic if a `Inversion` of the `InversionPopulation` has not a `Permutation`
@@ -255,9 +253,12 @@ impl<T> InversionPopulation<T> where
         Ok(())
     }
     
-    /// Fills an existing `InversionPopulation` with `Inversion`s based on `Permutations` in a given
-    /// `PermuPopulation`. The `Permutation` -> `Inversion` transformation is done 
-    /// respecting the positions in the population.
+    /// Fills a given `InversionPopulation` with the `inversion` representations from a 
+    /// `PermuPopulation`. The transformation is done respecting the positions inside the 
+    /// `PermuPopulation`.
+    /// 
+    /// # Errors
+    /// Returns a `LengthError` if the size of both populations are not equal.
     ///
     /// # Panics 
     /// The function panics if the internal `Inversion::from_permu` returns an `Error`.
@@ -281,14 +282,21 @@ impl<T> InversionPopulation<T> where
     /// ```
     ///
     pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>, 
-                       inversions: &mut InversionPopulation<T>) {
-        
+                       inversions: &mut InversionPopulation<T>) -> Result<(), LengthError>{
+        // Check sizes        
+        if permu_pop.size != inversions.size {
+            return Err(LengthError::from(String::from(
+                "InversionPopulation's and  PermuPopulation's sizes must be equal")));
+        }
+
         permu_pop.population.iter()
             .enumerate()
             .for_each(|(i, permu)| { match Inversion::from_permu(permu, &mut inversions.population[i]) {
                 Ok(_) => (),
                 Err(e) => panic!(e),
             }});
+
+        Ok(())
     }
 }
 
