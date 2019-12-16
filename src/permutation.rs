@@ -8,8 +8,8 @@ use std::error::Error;
 
 use rand::Rng;
 
-use crate::{Population, Distribution, IncorrectDistrType};
-use crate::inversion::{Inversion, InversionPopulation, LengthError};
+use crate::{Population, Distribution, IncorrectDistrType, LengthError};
+use crate::inversion::{Inversion, InversionPopulation};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
@@ -409,8 +409,8 @@ impl<T> Population for PermuPopulation<T> where
     /// Implementation of `sample` method for `PermuPopulation`.
     /// 
     /// # Errors
-    /// Returns a `LengthError` if the length of the `Permutation`s are
-    /// not the length of `Inversion`s - 1. Returns an `IncorrectDistrType` error if
+    /// Returns a `LengthError` if the length of the output population's `Permutation`s length 
+    /// is not equal to its population `Permutation`'s. Returns an `IncorrectDistrType` error if
     /// the given distribution is not `PermuDistribution`.
     ///
     /// # Example
@@ -428,6 +428,7 @@ impl<T> Population for PermuPopulation<T> where
     /// ```
     fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Box<dyn Error>> {
         
+        // Check if the given Distribution is correct
         let (distr, soften) = match distr {
             Distribution::PermuDistribution(d, s) => (d, s),
             _ => return Err(Box::new(IncorrectDistrType)), 
