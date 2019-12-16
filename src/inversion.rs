@@ -431,7 +431,7 @@ impl<T> Population for InversionPopulation<T> where
                         ))
             },
         };
-        
+        /* 
         // Check if the distribution is soften
         if !*soften {
             // If not, soften the distribution by adding one to every element of the matrix
@@ -445,6 +445,7 @@ impl<T> Population for InversionPopulation<T> where
                 max_val -= 1;
             });
         }
+        */
         
         // let mut used_pos = Vec::with_capacity(length); // List of used positions in the vector
 
