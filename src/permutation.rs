@@ -212,31 +212,6 @@ impl<T> Permutation<T> where
         Inversion::to_permu(&inversion,out)
     }
 }
-/*
-#[cfg(test)]
-mod tests_permu {
-
-    use crate::permutation::Permutation;
-    
-    #[test]
-    fn generate_rand_permus() {
-        for _i in 0..1000 {
-            let permu : Permutation<u8> = Permutation::random(40);
-            assert!(permu.is_permu());
-        }
-    }
-}
-*/
-
-/// Implementation for permutation probability distribution. 
-/*
-pub struct PermuDistribution {
-    pub distribution : Vec<Vec<usize>>,
-    pub soften : bool,
-}
-
-impl Distribution for PermuDistribution {}
-*/
 
 /// Population of `Permutations`.
 #[derive(PartialEq)]
@@ -281,8 +256,11 @@ impl<T> PermuPopulation<T> where
     /// # Example
     /// ```
     /// use permu_rs::permutation::PermuPopulation;
+    ///
     /// // Creates a population of 10 permutations with length 20
     /// let pop : PermuPopulation<u8> = PermuPopulation::zeros(10, 20);
+    ///
+    /// println!("Zeros population:\n{}", pop);
     /// ```
     pub fn zeros(size: usize, length: usize) -> PermuPopulation<T> {
         let zero = T::from(0u8);
@@ -301,9 +279,12 @@ impl<T> PermuPopulation<T> where
     /// # Example
     /// ```
     /// use permu_rs::permutation as permu;
+    ///
     /// let population = permu::PermuPopulation::<u8>::identity(10, 5);
     /// population.population.iter()
     ///     .for_each(|p| assert_eq!(*p, permu::Permutation::<u8>::identity(5)));
+    ///
+    /// println!("Identity population:\n{}", population);
     /// ```
     pub fn identity(size: usize, length: usize) -> PermuPopulation<T> {
         let mut pop : Vec<Permutation<T>> = Vec::new(); 
@@ -318,8 +299,10 @@ impl<T> PermuPopulation<T> where
     /// # Example
     /// ```
     /// use permu_rs::permutation::PermuPopulation;
+    ///
     /// let pop : PermuPopulation<u8> = PermuPopulation::random(10, 5);
     /// pop.population.iter().for_each(|p| assert!(p.is_permu())); // All permutations
+    ///
     /// assert_eq!(pop.size, pop.population.len()); // PermuPopulation size check
     /// ```
     pub fn random(size: usize, length: usize) -> PermuPopulation<T> {
@@ -341,10 +324,15 @@ impl<T> PermuPopulation<T> where
     /// ```
     /// use permu_rs::permutation::PermuPopulation;
     /// use permu_rs::inversion::InversionPopulation;
+    ///
     /// let (size, length) = (20,10);
     /// let permus = PermuPopulation::<u8>::random(size, length);
     /// let mut inv = InversionPopulation::zeros(size, length-1); // Init inv vector population
+    ///
     /// permus.to_inversion(&mut inv).unwrap();
+    ///
+    /// println!("{}", permus);
+    /// println!("{}\n", inv);
     /// ```
     pub fn to_inversion(&self, inv_pop: &mut InversionPopulation<T>) -> Result<(), LengthError> {
         InversionPopulation::from_permus(&self, inv_pop)?;
@@ -425,6 +413,8 @@ impl<T> Population for PermuPopulation<T> where
     /// let mut distr = pop.learn();
     ///
     /// Population::sample(&mut distr, &mut samples).unwrap();
+    ///
+    /// println!("{}", samples);
     /// ```
     fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Box<dyn Error>> {
         
@@ -494,27 +484,32 @@ impl<T> Population for PermuPopulation<T> where
     }        
 }
 
-/*
-#[cfg(test)]
-mod test_learn {
-    use crate::permutation::PermuPopulation;
-    use crate::Population;
+impl<T> fmt::Display for PermuPopulation<T> where 
+    T : Debug
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        
+        // For empty distibutions
+        if self.size == 0 {
+            return write!(f, "[]\nPermuPopulation, shape: 0,0\n");
+        }
 
-    #[test]
-    fn test() {
-        let pop = PermuPopulation::<u8>::random(1, 5);
-        pop.population.iter().for_each(|p| println!("{:?}", p.permu));
-        println!("");
+        let mut formatted = String::from("[");
 
-        let mut samples = PermuPopulation::<u8>::zeros(10, 5);
+        self.population.iter()
+            .take(self.size -1) // Do not take the last item
+            .for_each(|permu| {
+                formatted.push_str(format!("{:?},\n", permu.permu).as_str());
+            });
 
-        let mut distr = pop.learn();
+        // Now, take the last item
+        formatted.push_str(format!("{:?}]", 
+                                   self.population[self.size-1].permu).as_str());
 
-        Population::sample(&mut distr, &mut samples).unwrap();
-        samples.population.iter().for_each(|p| println!("{:?}", p.permu));
+        write!(f, "{}\nPermuPopulation, shape: {},{}\n", 
+               formatted, self.size, self.population[0].permu.len())
     }
 }
-*/
 
 /// Error type to return when a `Permutation` is not an actual permutation.
 #[derive(Debug)]

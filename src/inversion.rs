@@ -187,6 +187,8 @@ impl<T> InversionPopulation<T> where
     /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,2,0,0], vec![0,0,0,0]];
     /// let pop = InversionPopulation::from_vec(&pop).unwrap();
     ///
+    /// println!("{}", pop);
+    ///
     /// // Now, the seond vector contais one item less 
     /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,0,0], vec![0,0,0,0]];
     /// let pop = InversionPopulation::from_vec(&pop); // This should return a LengthError
@@ -225,6 +227,8 @@ impl<T> InversionPopulation<T> where
     ///
     /// inversions.to_permus(&mut permus);
     /// assert_eq!(identity, permus);
+    ///
+    /// println!("Zeros or identity population\n{}", inversions);
     /// ```
     pub fn zeros(size: usize, length: usize) -> InversionPopulation<T> {
         let mut population: Vec<Inversion<T>> = Vec::with_capacity(size); 
@@ -259,6 +263,9 @@ impl<T> InversionPopulation<T> where
     /// inversions.to_permus(&mut out_pop);
     ///
     /// assert_eq!(out_pop, identity_pop);
+    ///
+    /// println!("{}\n", inversions);
+    /// println!("{}", out_pop);
     /// ```
     pub fn to_permus(&self, permu_pop: &mut PermuPopulation<T>) -> Result<(), LengthError> {
 
@@ -310,6 +317,9 @@ impl<T> InversionPopulation<T> where
     ///
     /// InversionPopulation::from_permus(&permus, &mut inversions);
     /// assert_eq!(inversion_ok, inversions);
+    ///
+    /// println!("{}\n", permus);
+    /// println!("{}", inversions);
     /// ```
     ///
     pub fn from_permus(permu_pop: &PermuPopulation<T>, 
@@ -383,7 +393,12 @@ impl<T> Population for InversionPopulation<T> where
         Distribution::InversionDistribution(distr, false)
     }
 
-    // NOTE: DESCRIPTION 
+    /// Implementation of `sample` method for `PermuPopulation`.
+    ///
+    /// # Errors
+    /// Returns a `LengthError` if the length of the output population's `Inversion`'s length 
+    /// is not equal to its population `Inversions`'s. Returns an `IncorrectDistrType` error if
+    /// the given distribution is not `InversionPopulation`.
     //
     /// # Example
     /// ```
@@ -394,11 +409,10 @@ impl<T> Population for InversionPopulation<T> where
     /// let distr = vec![vec![1,1,1],vec![2,1,0],vec![3,0,0]];
     /// let mut distr = Distribution::InversionDistribution(distr, false);
     ///
-    /// let mut out = InversionPopulation::<u8>::zeros(50, 3); // Init putput population
+    /// let mut out = InversionPopulation::<u8>::zeros(10, 3); // Init putput population
     /// 
     /// InversionPopulation::sample(&mut distr, &mut out).unwrap(); // Sample distribution
-    /// // Print result
-    /// out.population.iter().for_each(|v| println!("sampled: {:?}", v));
+    /// println!("{}", out);
     /// ```
     fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Box<dyn Error>> {
         
@@ -457,6 +471,33 @@ impl<T> Population for InversionPopulation<T> where
                 });
         });
         Ok(())
+    }
+}
+
+impl<T> fmt::Display for InversionPopulation<T> where 
+    T : Debug
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        
+        // For empty distibutions
+        if self.size == 0 {
+            return write!(f, "[]\nInversionPopulation. Shape: 0,0\n");
+        }
+
+        let mut formatted = String::from("[");
+
+        self.population.iter()
+            .take(self.size -1) // Do not take the last item
+            .for_each(|inv| {
+                formatted.push_str(format!("{:?},\n", inv.inversion).as_str());
+            });
+
+        // Now, take the last item
+        formatted.push_str(format!("{:?}]", 
+                                   self.population[self.size-1].inversion).as_str());
+
+        write!(f, "{}\nInversionPopulation. Shape: {},{}\n", 
+               formatted, self.size, self.population[0].inversion.len())
     }
 }
 
