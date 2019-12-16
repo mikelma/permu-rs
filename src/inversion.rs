@@ -6,7 +6,8 @@ use fmt::{Debug, Display};
 
 use std::error::Error;
 
-use crate::permutation;
+use crate::permutation::{Permutation, PermuPopulation};
+use crate::{Population, Distribution, IncorrectDistrType};
 
 /// Contains a Inversion vector and method to generate and trasnform them.
 #[derive(Debug)]
@@ -68,7 +69,7 @@ impl<T> Inversion<T> where
     /// inversion::Inversion::from_permu(&permu, &mut inversion_repr).unwrap();
     /// assert_eq!(vec![0,2,1], inversion_repr.inversion);
     /// ```
-    pub fn from_permu(permu: &permutation::Permutation<T>, inversion: &mut Inversion<T>) -> Result<(), LengthError>{
+    pub fn from_permu(permu: &Permutation<T>, inversion: &mut Inversion<T>) -> Result<(), LengthError>{
         
         // Check if sizes are correct
         if permu.permu.len()-1 != inversion.inversion.len() {
@@ -108,7 +109,7 @@ impl<T> Inversion<T> where
     /// inversion.to_permu(&mut permu).unwrap();
     /// assert_eq!(vec![0,3,2,1], permu.permu);
     /// ```
-    pub fn to_permu(&self, out: &mut permutation::Permutation<T>) -> Result<(), LengthError> {
+    pub fn to_permu(&self, out: &mut Permutation<T>) -> Result<(), LengthError> {
          
         // Check if sizes are correct
         if out.permu.len()-1 != self.inversion.len() {
@@ -178,6 +179,36 @@ impl<T> InversionPopulation<T> where
     Display + // NOTE : For debugging
     Debug, // NOTE : For debugging
 {
+
+    /// Creates an `InversionPopulation`based on a given matrix.
+    /// # Example
+    /// ```
+    /// use permu_rs::inversion::InversionPopulation;
+    /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,2,0,0], vec![0,0,0,0]];
+    /// let pop = InversionPopulation::from_vec(&pop).unwrap();
+    ///
+    /// // Now, the seond vector contais one item less 
+    /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,0,0], vec![0,0,0,0]];
+    /// let pop = InversionPopulation::from_vec(&pop); // This should return a LengthError
+    /// assert!(pop.is_err());
+    /// ```
+    pub fn from_vec(vec: &Vec<Vec<T>>) -> Result<InversionPopulation<T>, LengthError> {
+        let mut pop : Vec<Inversion<T>> = Vec::with_capacity(vec.len());
+
+        let len = vec[0].len();
+
+        for v in vec {
+            if v.len() == len {
+                pop.push(Inversion::from_vec(v.clone()));
+            } else {
+                return Err(LengthError::from(String::from(
+                        "All vectors in the given matrix must have the same length")));
+            }
+        }
+
+        Ok(InversionPopulation {population: pop, size: vec.len()})
+    }
+
     /// Creates a `InversionPopulation` of the size given with `Inversion`s of length specified, filled with 0s. 
     /// This population represents a population of identity permutations.
     ///
@@ -229,7 +260,7 @@ impl<T> InversionPopulation<T> where
     ///
     /// assert_eq!(out_pop, identity_pop);
     /// ```
-    pub fn to_permus(&self, permu_pop: &mut permutation::PermuPopulation<T>) -> Result<(), LengthError> {
+    pub fn to_permus(&self, permu_pop: &mut PermuPopulation<T>) -> Result<(), LengthError> {
 
         // Check if for every Inversion is a Permutation in permu_pop
         if permu_pop.size != self.size {
@@ -281,7 +312,7 @@ impl<T> InversionPopulation<T> where
     /// assert_eq!(inversion_ok, inversions);
     /// ```
     ///
-    pub fn from_permus(permu_pop: &permutation::PermuPopulation<T>, 
+    pub fn from_permus(permu_pop: &PermuPopulation<T>, 
                        inversions: &mut InversionPopulation<T>) -> Result<(), LengthError>{
         // Check sizes        
         if permu_pop.size != inversions.size {
@@ -296,6 +327,135 @@ impl<T> InversionPopulation<T> where
                 Err(e) => panic!(e),
             }});
 
+        Ok(())
+    }
+}
+
+impl<T> Population for InversionPopulation<T> where 
+    T : Copy +
+    From<u8> +
+    TryFrom<usize> +
+    TryInto<usize> +
+    // PartialEq<T> +
+    Eq +
+    rand::distributions::range::SampleRange +
+    std::cmp::PartialOrd +
+    std::ops::Sub +
+    Display + // NOTE : For debugging
+    Debug, // NOTE : For debugging
+{
+    
+    /// Implementation of `learn` method for `InversionPopulation`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::{Population, Distribution};
+    /// use permu_rs::inversion::{InversionPopulation, Inversion};
+    /// use InversionPopulation as invpop;
+    /// use Inversion as inv;
+    /// 
+    /// let pop: Vec<Vec<u8>> = vec![vec![2,1,0], vec![1,0,0], vec![0,0,0]];
+    /// let pop = InversionPopulation::from_vec(&pop).unwrap();
+    ///
+    /// let target = vec![vec![1,1,1],vec![2,1,0],vec![3,0,0]];
+    /// let target = Distribution::InversionDistribution(target, false);
+    ///
+    /// let distr = pop.learn();
+    ///
+    /// assert_eq!(target, distr);
+    /// ```
+    // NOTE: i: positions, j: values
+    fn learn(&self) -> Distribution {
+        let n = self.size;                          // Number of possible values
+        let m = self.population[0].inversion.len(); // Number of positions
+        
+        let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
+        
+        for i in 0..n{ // For each vector in population
+            for j in 0..m { // For position item in the vector
+                let value: usize = match self.population[i].inversion[j].try_into() {
+                    Ok(val) => val,
+                    Err(_) => panic!("Fatal error converting generic type usize"), // TODO: Proper panic message
+                };
+                distr[j][value] += 1;
+            }
+        }
+        Distribution::InversionDistribution(distr, false)
+    }
+
+    // NOTE: DESCRIPTION 
+    //
+    /// # Example
+    /// ```
+    /// use permu_rs::{Population, Distribution};
+    /// use permu_rs::inversion::InversionPopulation;
+    /// 
+    /// // Initialize custom distribution
+    /// let distr = vec![vec![1,1,1],vec![2,1,0],vec![3,0,0]];
+    /// let mut distr = Distribution::InversionDistribution(distr, false);
+    ///
+    /// let mut out = InversionPopulation::<u8>::zeros(50, 3); // Init putput population
+    /// 
+    /// InversionPopulation::sample(&mut distr, &mut out).unwrap(); // Sample distribution
+    /// // Print result
+    /// out.population.iter().for_each(|v| println!("sampled: {:?}", v));
+    /// ```
+    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Box<dyn Error>> {
+        
+        // Check if the given Distribution is correct
+        let (distr, soften) = match distr {
+            Distribution::InversionDistribution(d, s) => (d, s),
+            _ => return Err(Box::new(IncorrectDistrType)), 
+        };
+
+        // Check distribution and population's permus' sizes
+        let length = match distr.len() == out.population[0].inversion.len() {
+            true => distr.len(),
+            false => {return Err(Box::new(
+                        LengthError::from(String::from( "The size of the given distribution 
+                            does not match with the length of the inversion vectors to sample"))
+                        ))
+            },
+        };
+        
+        // Check if the distribution is soften
+        if !*soften {
+            // If not, soften the distribution by adding one to every element of the matrix
+            let mut max_val = length;
+            (0..length).for_each(|i| {
+                (0..length).for_each(|j| {
+                    if j < max_val {
+                            distr[i][j] += 1;
+                    } 
+                });
+                max_val -= 1;
+            });
+        }
+        
+        // let mut used_pos = Vec::with_capacity(length); // List of used positions in the vector
+
+        (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
+
+            // Iterate the distribution randomly
+            Permutation::<usize>::random(length).permu.iter()
+                .for_each(|pos_i| {
+                    let max_sum : usize = distr[*pos_i].iter().sum();
+                    let rand: f64 = rand::thread_rng().gen_range(0.0, max_sum as f64);
+                    
+                    let mut sum = distr[*pos_i][0]; // Sum is initialized with the first value of distr[pos_i]
+                    let mut i = 0;
+                    while (sum as f64) < rand {
+                        i += 1;
+                        sum += distr[*pos_i][i];
+                    }
+
+                    // Add sampled value to the individual that is being sampled
+                    out.population[out_i].inversion[*pos_i] = match T::try_from(i) {
+                        Ok(v) => v,
+                        Err(_) => panic!("Fatal conversion error"), // NOTE: Properly panic
+                    };
+                });
+        });
         Ok(())
     }
 }
