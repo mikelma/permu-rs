@@ -35,6 +35,35 @@ pub enum Distribution {
     InversionDistribution(Vec<Vec<usize>>, bool),
 }
 
+impl fmt::Display for Distribution {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
+        let (distr, soften, distr_type) = match self {
+            Distribution::PermuDistribution(v, s) => (v, s, "PermuDistribution"),
+            Distribution::InversionDistribution(v, s) => (v, s, "InversionDistribution"),
+        };
+
+        // For empty distibutions
+        if distr.len() == 0 {
+            return write!(f, "[]\n");
+        }
+
+        let mut formatted = String::from("[");
+
+        distr.iter()
+            .take(distr.len() -1) // Do not take the last item
+            .for_each(|row| {
+                formatted.push_str(format!("{:?},\n", row).as_str());
+            });
+
+        // Now, take the last item
+        formatted.push_str(format!("{:?}]", 
+                                   distr[distr.len()-1]).as_str());
+
+        write!(f, "{}\n{}, soften: {}\n", formatted, distr_type, soften)
+    }
+}
+
 #[derive(Debug)]
 /// Error to return when an incorrect `Distribution` type is given.
 pub struct IncorrectDistrType;
