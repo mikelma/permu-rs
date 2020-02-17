@@ -4,11 +4,9 @@ use std::convert::TryInto;
 use std::fmt;
 use fmt::{Debug, Display};
 
-use std::error::Error;
-
 use rand::Rng;
 
-use crate::{Population, Distribution, IncorrectDistrType, LengthError};
+use crate::{Population, Distribution, errors::Error };
 use crate::inversion::{Inversion, InversionPopulation};
 
 /// Contains a permutation vector and methods to generate permutations.
@@ -41,7 +39,7 @@ impl<T> Permutation<T> where
     ///
     /// # Example
     /// ```
-    /// use permu_rs::permutation::{Permutation, NotPermutation};
+    /// use permu_rs::permutation::Permutation;
     /// 
     /// let permu_ok = Permutation::<u8>::from_vec(vec![0,4,2,1,3]).unwrap();
     ///
@@ -49,12 +47,12 @@ impl<T> Permutation<T> where
     /// let permu_err = Permutation::<u8>::from_vec(vec![5,4,2,1,3]); 
     /// assert!(permu_err.is_err());
     /// ```
-    pub fn from_vec(vec: Vec<T>) -> Result<Permutation<T>, NotPermutation> {
+    pub fn from_vec(vec: Vec<T>) -> Result<Permutation<T>, Error> {
         let permu = Permutation {permu : vec};
         
         match permu.is_permu() {
             true => Ok(permu),
-            false => Err(NotPermutation),
+            false => Err(Error::NotPermutation),
         }
     }
 
@@ -185,8 +183,8 @@ impl<T> Permutation<T> where
     ///
     /// assert_eq!(ok_inversion, base);
     /// ```
-    pub fn to_inversion(&self, out: &mut Inversion<T>) -> Result<(), LengthError> {
-        Inversion:: from_permu(&self, out)
+    pub fn to_inversion(&self, out: &mut Inversion<T>) -> Result<(), Error> {
+        Inversion::from_permu(&self, out)
     }
 
     /// Returns `Result` containing a `Permutation` based on the given `Permutation`.
@@ -208,7 +206,7 @@ impl<T> Permutation<T> where
     /// assert_eq!(ok_permu, permu);
     /// 
     /// ```
-    pub fn from_inversion(inversion: &Inversion<T>, out: &mut Permutation<T>) -> Result<(), LengthError> {
+    pub fn from_inversion(inversion: &Inversion<T>, out: &mut Permutation<T>) -> Result<(), Error> {
         Inversion::to_permu(&inversion,out)
     }
 }
@@ -334,7 +332,7 @@ impl<T> PermuPopulation<T> where
     /// println!("{}", permus);
     /// println!("{}\n", inv);
     /// ```
-    pub fn to_inversion(&self, inv_pop: &mut InversionPopulation<T>) -> Result<(), LengthError> {
+    pub fn to_inversion(&self, inv_pop: &mut InversionPopulation<T>) -> Result<(), Error> {
         InversionPopulation::from_permus(&self, inv_pop)?;
         Ok(()) 
     } 
@@ -416,22 +414,18 @@ impl<T> Population for PermuPopulation<T> where
     ///
     /// println!("{}", samples);
     /// ```
-    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Box<dyn Error>> {
+    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Error> {
         
         // Check if the given Distribution is correct
         let (distr, soften) = match distr {
             Distribution::PermuDistribution(d, s) => (d, s),
-            _ => return Err(Box::new(IncorrectDistrType)), 
+            _ => return Err(Error::IncorrectDistrType), 
         };
 
         // Check distribution and population's permus' sizes
         let length = match distr.len() == out.population[0].permu.len() {
             true => distr.len(),
-            false => {return Err(Box::new(
-                        LengthError::from(String::from( "The size of the given distribution 
-                            does not match with the length of the permutations to sample"))
-                        ))
-            },
+            false => return Err(Error::LengthError),
         };
         
         // Check if the distribution is soften 
@@ -510,15 +504,3 @@ impl<T> fmt::Display for PermuPopulation<T> where
                formatted, self.size, self.population[0].permu.len())
     }
 }
-
-/// Error type to return when a `Permutation` is not an actual permutation.
-#[derive(Debug)]
-pub struct NotPermutation;
-
-impl fmt::Display for NotPermutation {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Permutation expected but no permutation found")
-    }
-}
-
-impl Error for NotPermutation {}

@@ -4,10 +4,8 @@ use rand::Rng;
 use std::fmt;
 use fmt::{Debug, Display};
 
-use std::error::Error;
-
 use crate::permutation::{Permutation, PermuPopulation};
-use crate::{Population, Distribution, IncorrectDistrType};
+use crate::{Population, Distribution, errors::Error};
 
 /// Contains a Inversion vector and method to generate and trasnform them.
 #[derive(Debug)]
@@ -69,11 +67,11 @@ impl<T> Inversion<T> where
     /// inversion::Inversion::from_permu(&permu, &mut inversion_repr).unwrap();
     /// assert_eq!(vec![0,2,1], inversion_repr.inversion);
     /// ```
-    pub fn from_permu(permu: &Permutation<T>, inversion: &mut Inversion<T>) -> Result<(), LengthError>{
+    pub fn from_permu(permu: &Permutation<T>, inversion: &mut Inversion<T>) -> Result<(), Error> {
         
         // Check if sizes are correct
         if permu.permu.len()-1 != inversion.inversion.len() {
-            return Err(LengthError::new());
+            return Err(Error::LengthError);
         }
 
         for index in 0..inversion.inversion.len() {
@@ -109,11 +107,11 @@ impl<T> Inversion<T> where
     /// inversion.to_permu(&mut permu).unwrap();
     /// assert_eq!(vec![0,3,2,1], permu.permu);
     /// ```
-    pub fn to_permu(&self, out: &mut Permutation<T>) -> Result<(), LengthError> {
+    pub fn to_permu(&self, out: &mut Permutation<T>) -> Result<(), Error> {
          
         // Check if sizes are correct
         if out.permu.len()-1 != self.inversion.len() {
-            return Err(LengthError::new());
+            return Err(Error::LengthError);
         }
 
         let permu = &mut out.permu;
@@ -194,7 +192,7 @@ impl<T> InversionPopulation<T> where
     /// let pop = InversionPopulation::from_vec(&pop); // This should return a LengthError
     /// assert!(pop.is_err());
     /// ```
-    pub fn from_vec(vec: &Vec<Vec<T>>) -> Result<InversionPopulation<T>, LengthError> {
+    pub fn from_vec(vec: &Vec<Vec<T>>) -> Result<InversionPopulation<T>, Error> {
         let mut pop : Vec<Inversion<T>> = Vec::with_capacity(vec.len());
 
         let len = vec[0].len();
@@ -203,8 +201,7 @@ impl<T> InversionPopulation<T> where
             if v.len() == len {
                 pop.push(Inversion::from_vec(v.clone()));
             } else {
-                return Err(LengthError::from(String::from(
-                        "All vectors in the given matrix must have the same length")));
+                return Err(Error::LengthError);
             }
         }
 
@@ -267,18 +264,16 @@ impl<T> InversionPopulation<T> where
     /// println!("{}\n", inversions);
     /// println!("{}", out_pop);
     /// ```
-    pub fn to_permus(&self, permu_pop: &mut PermuPopulation<T>) -> Result<(), LengthError> {
+    pub fn to_permus(&self, permu_pop: &mut PermuPopulation<T>) -> Result<(), Error> {
 
         // Check if for every Inversion is a Permutation in permu_pop
         if permu_pop.size != self.size {
-            return Err(LengthError::from(String::from(
-                "InversionPopulation and the given PermuPopulation sizes must be equal")));
+            return Err(Error::LengthError);
         }
 
         // Check Permutation and Inversion lengths are compatible
         if permu_pop.population[0].permu.len() != self.population[0].inversion.len()+1 {
-            return Err(LengthError::from(String::from(
-                "The length of Permutations from PermuPopulation must be the length of Inversions+1")));
+            return Err(Error::LengthError);
         }
         
         // Convert each Inversion of the population to permutation 
@@ -323,11 +318,10 @@ impl<T> InversionPopulation<T> where
     /// ```
     ///
     pub fn from_permus(permu_pop: &PermuPopulation<T>, 
-                       inversions: &mut InversionPopulation<T>) -> Result<(), LengthError>{
+                       inversions: &mut InversionPopulation<T>) -> Result<(), Error>{
         // Check sizes        
         if permu_pop.size != inversions.size {
-            return Err(LengthError::from(String::from(
-                "InversionPopulation's and  PermuPopulation's sizes must be equal")));
+            return Err(Error::LengthError);
         }
 
         permu_pop.population.iter()
@@ -385,7 +379,7 @@ impl<T> Population for InversionPopulation<T> where
             for j in 0..m { // For position item in the vector
                 let value: usize = match self.population[i].inversion[j].try_into() {
                     Ok(val) => val,
-                    Err(_) => panic!("Fatal error converting generic type usize"), // TODO: Proper panic message
+                    Err(_) => panic!("Fatal error converting generic type usize"),
                 };
                 distr[j][value] += 1;
             }
@@ -414,22 +408,18 @@ impl<T> Population for InversionPopulation<T> where
     /// InversionPopulation::sample(&mut distr, &mut out).unwrap(); // Sample distribution
     /// println!("{}", out);
     /// ```
-    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Box<dyn Error>> {
+    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Error> {
         
         // Check if the given Distribution is correct
         let (distr, soften) = match distr {
             Distribution::InversionDistribution(d, s) => (d, s),
-            _ => return Err(Box::new(IncorrectDistrType)), 
+            _ => return Err(Error::IncorrectDistrType), 
         };
 
         // Check distribution and population's permus' sizes
         let length = match distr.len() == out.population[0].inversion.len() {
             true => distr.len(),
-            false => {return Err(Box::new(
-                        LengthError::from(String::from( "The size of the given distribution 
-                            does not match with the length of the inversion vectors to sample"))
-                        ))
-            },
+            false => return Err(Error::LengthError),
         };
          
         // Check if the distribution is soften
@@ -500,44 +490,3 @@ impl<T> fmt::Display for InversionPopulation<T> where
                formatted, self.size, self.population[0].inversion.len())
     }
 }
-
-/// Error type to return when transforming between representations and the 
-/// length of one of the vectors is not correct
-#[derive(Debug)]
-pub struct LengthError {
-    message: Option<String>,
-}
-
-impl LengthError {
-
-    /// Creates a `LengthError` object with the default error messge.
-    /// # Example
-    /// ```
-    /// use permu_rs::LengthError;
-    /// let my_error = LengthError::new();
-    /// ```
-    pub fn new() -> LengthError {
-        LengthError { message : None }
-    }
-    
-    /// Creates a `LengthError` object including a given custom error message.
-    /// # Example
-    /// ```
-    /// use permu_rs::LengthError;
-    /// let my_error = LengthError::from(String::from("Super custom message"));
-    /// ```
-    pub fn from(m: String) -> LengthError {
-        LengthError { message : Some(m) }
-    }
-}
-
-impl fmt::Display for LengthError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self.message {
-            Some(m) => write!(f, "{}", m),
-            None => write!(f, "Please check the lengths or shapes of the given arguments"),
-        }
-    }
-}
-
-impl Error for LengthError {}
