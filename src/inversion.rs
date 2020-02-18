@@ -435,8 +435,7 @@ impl<T> Population for InversionPopulation<T> where
                 max_val -= 1;
             });
         }
-        
-        // let mut used_pos = Vec::with_capacity(length); // List of used positions in the vector
+        println!("Done softening");
 
         (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
 
