@@ -410,6 +410,8 @@ impl<T> Population for InversionPopulation<T> where
     /// ```
     fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Error> {
         
+        println!("Starting to soft");
+
         // Check if the given Distribution is correct
         let (distr, soften) = match distr {
             Distribution::InversionDistribution(d, s) => (d, s),
@@ -422,6 +424,8 @@ impl<T> Population for InversionPopulation<T> where
             false => return Err(Error::LengthError),
         };
          
+        println!("pop length: {}", length);
+        
         // Check if the distribution is soften
         if !*soften {
             // If not, soften the distribution by adding one to every element of the matrix
