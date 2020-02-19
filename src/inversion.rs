@@ -361,7 +361,7 @@ impl<T> Population for InversionPopulation<T> where
     /// let pop: Vec<Vec<u8>> = vec![vec![2,1,0], vec![1,0,0], vec![0,0,0]];
     /// let pop = InversionPopulation::from_vec(&pop).unwrap();
     ///
-    /// let target = vec![vec![1,1,1],vec![2,1,0],vec![3,0,0]];
+    /// let target = vec![vec![1,1,1,0],vec![2,1,0,0],vec![3,0,0,0]];
     /// let target = Distribution::InversionDistribution(target, false);
     ///
     /// let distr = pop.learn();
@@ -370,12 +370,12 @@ impl<T> Population for InversionPopulation<T> where
     /// ```
     // NOTE: i: positions, j: values
     fn learn(&self) -> Distribution {
-        let n = self.size;                          // Number of possible values
-        let m = self.population[0].inversion.len(); // Number of positions
+        let m = self.population[0].inversion.len();     // Number of positions
+        let n = m+1;   // Number of possible values
+
+        let mut distr: Vec<Vec<usize>> = vec![vec![0; n]; m]; // Init distribution matrix
         
-        let mut distr: Vec<Vec<usize>> = vec![vec![0; m]; m]; // Init distribution matrix
-        
-        for i in 0..n{ // For each vector in population
+        for i in 0..self.population.len() { // For each vector in population
             for j in 0..m { // For position item in the vector
                 let value: usize = match self.population[i].inversion[j].try_into() {
                     Ok(val) => val,
@@ -410,7 +410,7 @@ impl<T> Population for InversionPopulation<T> where
     /// ```
     fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Error> {
         
-        println!("Starting to soft");
+        println!("Starting to soft"); // NOTE: DEBUG
 
         // Check if the given Distribution is correct
         let (distr, soften) = match distr {
@@ -424,7 +424,7 @@ impl<T> Population for InversionPopulation<T> where
             false => return Err(Error::LengthError),
         };
          
-        println!("pop length: {}", length);
+        println!("pop length: {}", length); // NOTE: DEBUG
         
         // Check if the distribution is soften
         if !*soften {
@@ -439,7 +439,7 @@ impl<T> Population for InversionPopulation<T> where
                 max_val -= 1;
             });
         }
-        println!("Done softening");
+        println!("Done softening");//NOTE: DEBUG 
 
         (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
 
