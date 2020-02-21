@@ -76,7 +76,7 @@ impl<T> Rim<T> where
                 };
                 
                 inner.insert(index, element);
-                println!("*inner: {:?}, insert {} in {}", inner, e, index);
+                // println!("*inner: {:?}, insert {} in {}", inner, e, index);
             });
 
         Ok(Permutation::from_vec(inner)?)
