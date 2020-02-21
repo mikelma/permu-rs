@@ -9,6 +9,7 @@ use std::fmt;
 // Import modules
 pub mod permutation;
 pub mod inversion;
+pub mod rim;
 
 // Import errors
 pub mod errors;

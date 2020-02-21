@@ -7,7 +7,7 @@ use fmt::{Debug, Display};
 use crate::permutation::{Permutation, PermuPopulation};
 use crate::{Population, Distribution, errors::Error};
 
-/// Contains a Inversion vector and method to generate and trasnform them.
+/// Contains a Inversion vector and methods to generate and trasnform them.
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(PartialEq)]
