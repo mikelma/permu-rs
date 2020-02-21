@@ -119,7 +119,7 @@ impl<T> Rim<T> where
                     None => unreachable!(),
                 };
 
-                println!("Position of {} is {}", element, index_t);
+                //println!("Position of {} is {}", element, index_t);
                 inner[element] = index_t;
 
                 permu.remove(index);
