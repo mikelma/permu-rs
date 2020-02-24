@@ -438,6 +438,8 @@ impl<T> Population for InversionPopulation<T> where
                 });
                 max_val -= 1;
             });
+            // Mark the distribution as soften
+            *soften = true;
         }
 
         (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
