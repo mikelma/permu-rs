@@ -399,39 +399,39 @@ impl<T> Population for InversionPopulation<T> where
     /// use permu_rs::{Population, Distribution};
     /// use permu_rs::inversion::InversionPopulation;
     /// 
-    /// // Initialize custom distribution
-    /// let distr = vec![vec![1,1,1],vec![2,1,0],vec![3,0,0]];
+    /// // Initialize a custom distribution
+    /// let distr = vec![vec![1,1,1,0],vec![2,1,0,0],vec![3,0,0,0]];
     /// let mut distr = Distribution::InversionDistribution(distr, false);
+    /// println!("Original distr:\n{}", distr);
+    /// // Init output population
+    /// let mut out = InversionPopulation::<u8>::zeros(10, 3); 
+    /// // Sample distribution
+    /// InversionPopulation::sample(&mut distr, &mut out).unwrap();
     ///
-    /// let mut out = InversionPopulation::<u8>::zeros(10, 3); // Init putput population
-    /// 
-    /// InversionPopulation::sample(&mut distr, &mut out).unwrap(); // Sample distribution
-    /// println!("{}", out);
+    /// // Now the original distribution has been changed in order to soften it
+    /// println!("Now distr:\n{}", distr);
+    /// println!("Out:\n{}", out); // Sampled population
     /// ```
     fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Error> {
-        
-        println!("Starting to soft"); // NOTE: DEBUG
-
-        // Check if the given Distribution is correct
+        // Check if the given Distribution type is correct
         let (distr, soften) = match distr {
             Distribution::InversionDistribution(d, s) => (d, s),
             _ => return Err(Error::IncorrectDistrType), 
         };
 
-        // Check distribution and population's permus' sizes
+        // Check distribution and population's vector's sizes are correct
         let length = match distr.len() == out.population[0].inversion.len() {
             true => distr.len(),
             false => return Err(Error::LengthError),
         };
          
-        println!("pop length: {}", length); // NOTE: DEBUG
-        
         // Check if the distribution is soften
         if !*soften {
-            // If not, soften the distribution by adding one to every element of the matrix
-            let mut max_val = length;
+            // If not, soften the distribution by adding one to every element of the matrix.
+            // In this case, only the elements in the upper diagonal of the matrix are modified.
+            let mut max_val = length+1;
             (0..length).for_each(|i| {
-                (0..length).for_each(|j| {
+                (0..length+1).for_each(|j| {
                     if j < max_val {
                             distr[i][j] += 1;
                     } 
@@ -439,13 +439,12 @@ impl<T> Population for InversionPopulation<T> where
                 max_val -= 1;
             });
         }
-        println!("Done softening");//NOTE: DEBUG 
 
         (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
 
             // Iterate the distribution randomly
             Permutation::<usize>::random(length).permu.iter()
-                .for_each(|pos_i| {
+                .for_each(|pos_i| { // For each row in the distribution (random) 
                     let max_sum : usize = distr[*pos_i].iter().sum();
                     let rand: f64 = rand::thread_rng().gen_range(0.0, max_sum as f64);
                     
