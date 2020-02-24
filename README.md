@@ -16,42 +16,46 @@ Add this to your `Cargo.toml`:
 permu-rs = "0.2.0"
 ```
 
-Here's a simple example that tries to recover the original distribution from a sampled poplation:
+Here's a simple example in order to illustrate how to transform populations from one representation space to another and how to learn and sample distributions:
 ```rust
 use permu_rs::permutation::PermuPopulation;
+use permu_rs::inversion::InversionPopulation;
 use permu_rs::Population;
 
 fn main() {
+    let length = 5;     // Length of permutations
+    let pop_size = 5;   // Number of individuals in the population
 
-    let length = 5; // Length of permutations
-    let n_samples = 100;
+    // Create an identity permutation population
+    let identity = PermuPopulation::<u8>::identity(pop_size, length);
+    println!("Identity permutation population:\n{}", identity);
 
-    // Create a population of identity permutations (elements are of 8 bits, so max length is 255)
-    let mut identity = PermuPopulation::<u8>::identity(n_samples, length);
+    // Initialize an inversion population to hold the inversion vector
+    // representation of the population of permutations
+    let mut invs = InversionPopulation::<u8>::zeros(pop_size, length-1);
 
-    let mut distr = identity.learn(); // Calculate the distribution
+    // Convert the permutation population into its inversion representation
+    identity.to_inversion(&mut invs).unwrap();
+    println!("Inversion population from permutations:\n{}", invs);
 
-    println!("Original distribution:\n{}", distr);
+    // Learn a distritibution over the inversion vector population
+    let mut distr = invs.learn();
+    println!("Distribution of the inversion population:\n{}", distr);
 
-    // Init samples population
-    let mut samples = PermuPopulation::<u8>::zeros(n_samples, length);
+    // Sample the learned distribution creating a new inversion population
+    let mut samples = InversionPopulation::<u8>::zeros(pop_size, length-1);
+    InversionPopulation::sample(&mut distr, &mut samples).unwrap();
+    // Note that the distribution has changed. The distribution was
+    // soften inside the sampling procedure.
+    println!("Soften distribution of the inversion population:\n{}", distr);
+    println!("Sampled solutions from the distribution:\n{}", samples);
 
-    // Sample a new population from the original distribution
-    match Population::sample(&mut distr, &mut samples) {
-        Ok(_) => (),
-        Err(e) => panic!("Fatal: {}", e),
-    }
+    // Create a permutation population to hold the new permutation population
+    let mut recovered = PermuPopulation::<u8>::identity(pop_size, length);
 
-    // The distribution is soften before sampling (+1 to every value of 
-    // distribution matrix). So, the original distribution is soften now.
-    let soften_distr = distr;
-    println!("Soften original distribution:\n{}", soften_distr);
-
-    // Samples follow the soften distribution of the original distribution.
-    // In consequence, the recovered distribution is compared with the soften 
-    // original distribution.
-    println!("Recovered distribution:\n{}",samples.learn());
-
+    // Convert the sampled inversion vectors to their permutation representation
+    samples.to_permus(&mut recovered).unwrap();
+    println!("Permutation representation of samples:\n{}", recovered);
 }
 ```
 
