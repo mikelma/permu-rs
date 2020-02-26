@@ -45,11 +45,15 @@ impl<T> Rim<T> where
     }
     
     /// Returns the length of the inner `Rim` vector.
-    pub fn len(self) -> usize {
+    pub fn len(&self) -> usize {
         self.inner.len()
     }
     
     /// Transforms a given insertion vector (RIM) into it's permutation representation. 
+    ///
+    /// # Errors
+    /// Returns a `LengthError` if the length of the output permutation is not the length of the
+    /// given rim vector + 1.
     ///
     /// # Example
     /// ```
@@ -64,10 +68,14 @@ impl<T> Rim<T> where
     ///
     /// let target = Permutation::from_vec(vec![1,0,3,2]).unwrap();
     /// assert_eq!(target, output);
-    ///
     /// ```
     pub fn to_permu(iv: &Rim<T>, out: &mut Permutation<T>) -> Result<(), Error> {
-        let permu_length = iv.inner.len()+1;
+        let permu_length = out.len();
+        // Check lengths are compatible
+        if permu_length != iv.len() + 1 {
+            return Err(Error::LengthError);     
+        }
+
         // Clear all the values from the output permutation
         out.permu.clear();
         let inner = &mut out.permu;
@@ -101,6 +109,10 @@ impl<T> Rim<T> where
 
     /// Transforms a given permutation vector into it's insertion vector (Rim) representation. 
     ///
+    /// # Errors
+    /// Returns a `LengthError` if the length of the given permutation is not the length of the
+    /// output rim vector + 1.
+    ///
     /// # Example
     /// ```
     /// use permu_rs::{ permutation::Permutation, rim::Rim };
@@ -116,8 +128,13 @@ impl<T> Rim<T> where
     /// assert_eq!(target, rim);
     /// ```
     pub fn from_permu(permu: &Permutation<T>, out: &mut Rim<T>) -> Result<(), Error> {
-        let mut permu = permu.permu.clone(); // NOTE: Not efficient
         let length = permu.len();
+        // Check lengths
+        if length != out.len() + 1 {
+            return Err(Error::LengthError);     
+        }
+
+        let mut permu = permu.permu.clone(); // NOTE: Not efficient
         // let mut inner: Vec<T> = vec![T::from(0u8); length];
         out.inner = out.inner.iter_mut()
                              .map(|_| T::from(0u8))
@@ -176,6 +193,10 @@ impl<T> RimPopulation<T> where
     Debug, // NOTE : For debugging
 {
     /// Creates an `InversionPopulation` based on a given matrix.
+    ///
+    /// # Errors
+    /// Returns a `LengthError` if the length of all vectors is not equal.
+    ///
     /// # Example
     /// ```
     /// use permu_rs::rim::RimPopulation;
