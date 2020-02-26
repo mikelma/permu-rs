@@ -30,6 +30,11 @@ impl<T> Permutation<T> where
     Display + // NOTE : For debugging
     Debug, // NOTE : For debugging
 {
+
+    /// Returns the length of the inner permutation vector.
+    pub fn len(&self) -> usize {
+        self.permu.len()
+    }
     
     /// Initializes a Permutation with the given vector. 
     ///
