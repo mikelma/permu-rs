@@ -43,23 +43,29 @@ impl<T> Rim<T> where
     /// # Example
     /// ```
     /// use permu_rs::{ permutation::Permutation, rim::Rim };
-    /// let rim = Rim::<u8>::from_vec(vec![0,0,2,2]);
-    /// let permu = Rim::<u8>::to_permu(&rim).unwrap();
+    /// let rim = Rim::<u8>::from_vec(vec![0,2,2]);
+    /// let mut output = Permutation::<u8>::identity(4);
+    /// Rim::<u8>::to_permu(&rim, &mut output).unwrap();
     /// println!("insertion vector: {:?}", rim.inner);
-    /// println!("permutation: {:?}", permu.permu);
+    /// println!("permutation: {:?}", output.permu);
     ///
     /// let target = Permutation::from_vec(vec![1,0,3,2]).unwrap();
-    /// assert_eq!(target, permu);
+    /// assert_eq!(target, output);
     ///
     /// ```
-    pub fn to_permu(iv: &Rim<T>) -> Result<Permutation<T>, Error> {
-        let length = iv.inner.len();
-        let mut inner : Vec<T> = vec![iv.inner[0]];
-    
-        (1..length)
-            .for_each(|e| {
+    pub fn to_permu(iv: &Rim<T>, out: &mut Permutation<T>) -> Result<(), Error> {
+        let permu_length = iv.inner.len()+1;
+        // Clear all the values from the output permutation
+        out.permu.clear();
+        let inner = &mut out.permu;
 
-                let index = match iv.inner[e].try_into() {
+        // Start by pushing 0 to the output permutation 
+        inner.push(T::from(0u8));
+    
+        (1..permu_length)
+            .for_each(|e| {
+                // Get the index to insert the element
+                let index = match iv.inner[e-1].try_into() {
                         Ok(v) => {
                             if v > inner.len() {
                                 inner.len()
@@ -69,17 +75,15 @@ impl<T> Rim<T> where
                         },
                         Err(_) => panic!("Fatal conversion error"),
                 };
-
+                // Obtain the element to insert (from identity)
                 let element = match T::try_from(e) {
                         Ok(v) => v,
                         Err(_) => panic!("Fatal conversion error"),
                 };
                 
                 inner.insert(index, element);
-                // println!("*inner: {:?}, insert {} in {}", inner, e, index);
             });
-
-        Ok(Permutation::from_vec(inner)?)
+        Ok(())
     }
 
     /// Transforms a given permutation vector into it's insertion vector (Rim) representation. 
