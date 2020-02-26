@@ -202,6 +202,25 @@ impl<T> RimPopulation<T> where
         }
         Ok(RimPopulation {population: pop, size: vec.len()})
     }
+    
+    /// Creates a `RimPopulation` of zero valued `Rim` vectors of the size and length given.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::rim::RimPopulation;
+    ///
+    /// let (size, length) = (7, 5);
+    /// let pop = RimPopulation::<u8>::zeros(size, length);
+    /// println!("{}", pop);
+    /// ```
+    pub fn zeros(size: usize, length: usize) -> RimPopulation<T> {
+        let mut population: Vec<Rim<T>> = Vec::with_capacity(size); 
+        let zeros = vec![T::from(0u8);length];
+
+        (0..size).for_each(|_| population.push(Rim::from_vec(zeros.clone())));
+        
+        RimPopulation { population, size }
+    }
 }
 
 impl<T> fmt::Display for RimPopulation<T> where 
