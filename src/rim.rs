@@ -1,5 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{Debug, Display};
+use std::fmt;
 
 use crate::errors::Error;
 use crate::permutation::{Permutation};
@@ -174,4 +175,57 @@ impl<T> RimPopulation<T> where
     Display + // NOTE : For debugging
     Debug, // NOTE : For debugging
 {
+    /// Creates an `InversionPopulation` based on a given matrix.
+    /// # Example
+    /// ```
+    /// use permu_rs::rim::RimPopulation;
+    /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,2,0,0], vec![0,0,0,0]];
+    /// let pop = RimPopulation::from_vec(&pop).unwrap();
+    ///
+    /// println!("{}", pop);
+    ///
+    /// // Now, the seond vector contais one item less 
+    /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,0,0], vec![0,0,0,0]];
+    /// let pop = RimPopulation::from_vec(&pop); // This should return a LengthError
+    /// assert!(pop.is_err());
+    /// ```
+    pub fn from_vec(vec: &Vec<Vec<T>>) -> Result<RimPopulation<T>, Error> {
+        let mut pop : Vec<Rim<T>> = Vec::with_capacity(vec.len());
+        let len = vec[0].len();
+
+        for v in vec {
+            if v.len() == len {
+                pop.push(Rim::from_vec(v.clone()));
+            } else {
+                return Err(Error::LengthError);
+            }
+        }
+        Ok(RimPopulation {population: pop, size: vec.len()})
+    }
+}
+
+impl<T> fmt::Display for RimPopulation<T> where 
+    T : Debug
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        
+        // For empty distibutions
+        if self.size == 0 {
+            return write!(f, "[]\nRimPopulation. Shape: 0,0\n");
+        }
+
+        let mut formatted = String::from("[");
+        self.population.iter()
+            .take(self.size -1) // Do not take the last item
+            .for_each(|rim| {
+                formatted.push_str(format!("{:?},\n", rim.inner).as_str());
+            });
+
+        // Now, take the last item
+        formatted.push_str(format!("{:?}]", 
+                                   self.population[self.size-1].inner).as_str());
+
+        write!(f, "{}\nInversionPopulation. Shape: {},{}\n", 
+               formatted, self.size, self.population[0].inner.len())
+    }
 }
