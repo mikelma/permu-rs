@@ -452,7 +452,8 @@ impl<T> Population for InversionPopulation<T> where
             // Mark the distribution as soften
             *soften = true;
         }
-
+        
+        // This is where the actual sampling happens
         (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
 
             // Iterate the distribution randomly
@@ -471,7 +472,7 @@ impl<T> Population for InversionPopulation<T> where
                     // Add sampled value to the individual that is being sampled
                     out.population[out_i].inversion[*pos_i] = match T::try_from(i) {
                         Ok(v) => v,
-                        Err(_) => panic!("Fatal conversion error"), // NOTE: Properly panic
+                        Err(_) => unreachable!(),
                     };
                 });
         });
