@@ -290,6 +290,53 @@ impl<T> RimPopulation<T> where
         Ok(())
     }
     
+     
+    /// Fills a `RimPopulation` with the rim vector representation of each 
+    /// permutation vector inside a given `PermuPopulation`. Note that the sizes
+    /// of both populations must match and the length of permutations must be 
+    /// equal to the length of the rim vectors + 1.
+    ///
+    /// # Errors
+    /// Returns a `LengthError` if the size of both population isn't equal or the length
+    /// of the `Permutation`s isn't the length of the `Rim` vectors + 1.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::{
+    ///     permutation::PermuPopulation,
+    ///     rim::RimPopulation,
+    /// };
+    /// // Create a target population of random permutations
+    /// let mut permus = PermuPopulation::<u8>::random(10, 5);
+    /// let target = permus.clone();
+    /// // Init rim population
+    /// let mut rims = RimPopulation::<u8>::zeros(10, 4);
+    ///
+    /// // Convert the permutations into rim vectors and then recover the 
+    /// // original permutations from the rim vectors.
+    /// RimPopulation::from_permus(&permus, &mut rims).unwrap();
+    /// RimPopulation::to_permus(&rims, &mut permus).unwrap();
+    ///
+    /// assert_eq!(target, permus);
+    /// ```
+    pub fn from_permus(permu_pop: &PermuPopulation<T>, 
+                       rim_pop: &mut RimPopulation<T>) -> Result<(), Error>{
+        // Check sizes        
+        if permu_pop.size != rim_pop.size {
+            return Err(Error::LengthError);
+        }
+        // Check lengths, permu.len() must be rim.len()+1
+        if permu_pop.population[0].len() != rim_pop.population[0].len()+1 {
+            return Err(Error::LengthError);
+        }
+
+        permu_pop.population.iter()
+            .enumerate()
+            .for_each(|(i, permu)| Rim::from_permu(permu, &mut rim_pop.population[i]).unwrap());
+
+        Ok(())
+    }
+
 }
 
 impl<T> fmt::Display for RimPopulation<T> where 
