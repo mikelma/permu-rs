@@ -41,6 +41,11 @@ impl<T> Inversion<T> where
     pub fn from_vec(vec : Vec<T>) -> Inversion<T> {
         Inversion { inversion : vec }        
     }
+    
+    /// Returns the length of the inner inversion vector.
+    pub fn len(&self) -> usize {
+        self.inversion.len()
+    }
 
     /// Creates a Inversion filled with 0s. 
     ///
@@ -291,7 +296,8 @@ impl<T> InversionPopulation<T> where
     /// `PermuPopulation`.
     /// 
     /// # Errors
-    /// Returns a `LengthError` if the size of both populations are not equal.
+    /// Returns a `LengthError` if the size of both populations are not equal or if the length
+    /// of the permutations is not equal to the length of the inversion vectors + 1.
     ///
     /// # Panics 
     /// The function panics if the internal `Inversion::from_permu` returns an `Error`.
@@ -321,6 +327,11 @@ impl<T> InversionPopulation<T> where
                        inversions: &mut InversionPopulation<T>) -> Result<(), Error>{
         // Check sizes        
         if permu_pop.size != inversions.size {
+            return Err(Error::LengthError);
+        }
+
+        // Check lengths
+        if permu_pop.population[0].len() != inversions.population[0].len()+1 {
             return Err(Error::LengthError);
         }
 
