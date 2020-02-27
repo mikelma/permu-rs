@@ -2,8 +2,11 @@ use std::convert::{TryFrom, TryInto};
 use std::fmt::{Debug, Display};
 use std::fmt;
 
+use rand::Rng;
+
 use crate::errors::Error;
 use crate::permutation::{Permutation, PermuPopulation};
+use crate::{Distribution, Population};
 
 /// Contains a repeated insertion model (RIM) vector and methods to generate and trasnform them.
 #[derive(Debug)]
@@ -200,14 +203,14 @@ impl<T> RimPopulation<T> where
     /// # Example
     /// ```
     /// use permu_rs::rim::RimPopulation;
-    /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,2,0,0], vec![0,0,0,0]];
-    /// let pop = RimPopulation::from_vec(&pop).unwrap();
+    /// let pop_matrix: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,2,0,0], vec![0,0,0,0]];
+    /// let pop = RimPopulation::from_vec(&pop_matrix).unwrap();
     ///
     /// println!("{}", pop);
     ///
-    /// // Now, the seond vector contais one item less 
-    /// let pop: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,0,0], vec![0,0,0,0]];
-    /// let pop = RimPopulation::from_vec(&pop); // This should return a LengthError
+    /// // Now, the second vector contais one item less 
+    /// let pop_matrix: Vec<Vec<u16>> = vec![vec![0,2,0,0], vec![1,0,0], vec![0,0,0,0]];
+    /// let pop = RimPopulation::from_vec(&pop_matrix); // This should return a LengthError
     /// assert!(pop.is_err());
     /// ```
     pub fn from_vec(vec: &Vec<Vec<T>>) -> Result<RimPopulation<T>, Error> {
@@ -337,6 +340,128 @@ impl<T> RimPopulation<T> where
         Ok(())
     }
 
+}
+
+impl<T> Population for RimPopulation<T> where 
+    T : Copy +
+    From<u8> +
+    TryFrom<usize> +
+    TryInto<usize> +
+    // PartialEq<T> +
+    Eq +
+    rand::distributions::range::SampleRange +
+    std::cmp::PartialOrd +
+    std::ops::Sub +
+    Display + // NOTE : For debugging
+    Debug, // NOTE : For debugging
+{
+
+    /// Implementation of `learn` method for `RimPopulation`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::{Distribution, Population, rim::RimPopulation};
+    /// 
+    /// // Init a population of custom rim vectors
+    /// let pop: Vec<Vec<u8>> = vec![vec![2,1,0], vec![1,0,0], vec![0,0,0]];
+    /// let pop = RimPopulation::from_vec(&pop).unwrap();
+    ///
+    /// // Cratethe target distribution for the created rim population
+    /// let target = vec![vec![1,1,1,0],vec![2,1,0,0],vec![3,0,0,0]];
+    /// let target = Distribution::RimDistribution(target, false);
+    ///
+    /// let distr = pop.learn();
+    /// assert_eq!(target, distr);
+    /// ```
+    fn learn(&self) -> Distribution {
+        let m = self.population[0].len();     // Number of positions
+        let n = m+1;   // Number of possible values
+
+        let mut distr: Vec<Vec<usize>> = vec![vec![0; n]; m]; // Init distribution matrix
+        
+        for i in 0..self.population.len() { // For each vector in population
+            for j in 0..m { // For position item in the vector
+                let value: usize = match self.population[i].inner[j].try_into() {
+                    Ok(val) => val,
+                    Err(_) => panic!("Fatal error converting generic type usize"),
+                };
+                distr[j][value] += 1;
+            }
+        }
+        Distribution::RimDistribution(distr, false)
+    }
+    
+    /// Implementation of `sample` method for `RimPopulation`.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::{Distribution, Population, rim::RimPopulation};
+    /// 
+    /// // Init a population of custom rim vectors
+    /// let pop: Vec<Vec<u8>> = vec![vec![2,1,0], vec![1,0,0], vec![0,0,0]];
+    /// let pop = RimPopulation::from_vec(&pop).unwrap();
+    ///
+    /// // Init a population to store the samples
+    /// let mut samples = RimPopulation::<u8>::zeros(7, 3);
+    ///
+    /// let mut distr = pop.learn();
+    /// println!("Distribution:\n{}", distr);
+    ///
+    /// RimPopulation::sample(&mut distr, &mut samples).unwrap();
+    /// println!("Distribution after sampling:\n{}", distr);
+    ///
+    /// println!("Original population:\n{}", pop);
+    /// println!("Sampled population:\n{}", samples);
+    /// ```
+    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Error> {
+        // Check if the given Distribution type is correct
+        let (distr, soften) = match distr {
+            Distribution::RimDistribution(d, s) => (d, s),
+            _ => return Err(Error::IncorrectDistrType), 
+        };
+
+        // Check distribution and population's vector's sizes are correct
+        // length = the number of positions in the rim vectors
+        let length = match distr.len() == out.population[0].len() {
+            true => distr.len(),
+            false => return Err(Error::LengthError),
+        };
+         
+        // Check if the distribution is soften
+        if !*soften {
+            // If not, soften the distribution by adding one to every element of the matrix.
+            (0..length).for_each(|i| {
+                (0..length+1).for_each(|j| distr[i][j] += 1);
+            });
+            // Mark the distribution as soften
+            *soften = true;
+        }
+
+        // This is where the actual sampling happens
+        (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
+
+            // Iterate the distribution randomly
+            Permutation::<usize>::random(length).permu.iter()
+                .for_each(|pos_i| { // For each row in the distribution (random) 
+                    let max_sum : usize = distr[*pos_i].iter().sum();
+                    let rand: f64 = rand::thread_rng().gen_range(0.0, max_sum as f64);
+                    
+                    let mut sum = distr[*pos_i][0]; // Sum is initialized with the first value of distr[pos_i]
+                    let mut i = 0;
+                    while (sum as f64) < rand {
+                        i += 1;
+                        sum += distr[*pos_i][i];
+                    }
+
+                    // Add sampled value to the individual that is being sampled
+                    out.population[out_i].inner[*pos_i] = match T::try_from(i) {
+                        Ok(v) => v,
+                        Err(_) => unreachable!(),
+                    };
+                });
+        });
+        Ok(())
+    }
 }
 
 impl<T> fmt::Display for RimPopulation<T> where 
