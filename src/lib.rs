@@ -31,8 +31,10 @@ pub trait Population {
 pub enum Distribution {
     /// Probability distribution for permutation populations
     PermuDistribution(Vec<Vec<usize>>, bool),
-    /// Probability distribution for Inversion populations
+    /// Probability distribution for inversion vector populations
     InversionDistribution(Vec<Vec<usize>>, bool),
+    /// Probability distribution for RIM vector populations
+    RimDistribution(Vec<Vec<usize>>, bool),
 }
 
 impl fmt::Display for Distribution {
@@ -41,6 +43,7 @@ impl fmt::Display for Distribution {
         let (distr, soften, distr_type) = match self {
             Distribution::PermuDistribution(v, s) => (v, s, "PermuDistribution"),
             Distribution::InversionDistribution(v, s) => (v, s, "InversionDistribution"),
+            Distribution::RimDistribution(v, s) => (v, s, "RimDistribution"),
         };
 
         // For empty distibutions
@@ -49,17 +52,15 @@ impl fmt::Display for Distribution {
         }
 
         let mut formatted = String::from("[");
-
         distr.iter()
             .take(distr.len() -1) // Do not take the last item
             .for_each(|row| {
                 formatted.push_str(format!("{:?},\n", row).as_str());
             });
 
-        // Now, take the last item
+        // Now, take the last item and write the buffer
         formatted.push_str(format!("{:?}]", 
                                    distr[distr.len()-1]).as_str());
-
         write!(f, "{}\n{}, soften: {}\n", formatted, distr_type, soften)
     }
 }
