@@ -3,7 +3,7 @@ use std::fmt::{Debug, Display};
 use std::fmt;
 
 use crate::errors::Error;
-use crate::permutation::{Permutation};
+use crate::permutation::{Permutation, PermuPopulation};
 
 /// Contains a repeated insertion model (RIM) vector and methods to generate and trasnform them.
 #[derive(Debug)]
@@ -242,6 +242,54 @@ impl<T> RimPopulation<T> where
         
         RimPopulation { population, size }
     }
+    
+    /// Takes a `PermuPopulation` as an output and fills this population with the `Permutation` 
+    /// representation  of each `Rim`vector in the `RimPopulation`. `RimPopulation` to its 
+    /// `Permutation` representation. Positions of vectors are respected.
+    ///
+    /// # Errors
+    /// Returns a `LengthError` if the size of both population isn't equal or the length
+    /// of the `Permutation`s isn't the length of the `Rim` vectors + 1.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::{
+    ///     permutation::{ Permutation, PermuPopulation },
+    ///     rim::RimPopulation };
+    ///
+    /// let (size, length) = (10, 5);
+    /// let rim_zeros = RimPopulation::<u16>::zeros(size, length-1);
+    /// let mut permus = PermuPopulation::<u16>::random(size, length);
+    /// // The output should look like this
+    /// let target = PermuPopulation::<u16>::from_vec(vec![
+    ///                 Permutation::<u16>::from_vec(vec![4,3,2,1,0]).unwrap();size]);
+    ///
+    /// // Convert the rim population to its permutation representation 
+    /// rim_zeros.to_permus(&mut permus).unwrap();
+    /// assert_eq!(target, permus);
+    /// ```
+    pub fn to_permus(&self, permu_pop: &mut PermuPopulation<T>) -> Result<(), Error> {
+
+        // Check if for every Rim vector there's a Permutation in permu_pop
+        if permu_pop.size != self.size {
+            return Err(Error::LengthError);
+        }
+
+        // Check Permutation and Rim vector lengths are compatible
+        if permu_pop.population[0].len() != self.population[0].len()+1 {
+            return Err(Error::LengthError);
+        }
+        
+        // Convert each Rim vector of the population to permutation 
+        (0..self.size).for_each(|i| {
+            match Rim::to_permu(&self.population[i], &mut permu_pop.population[i]) {
+                Ok(_) => (),
+                Err(e) => panic!("Fatal error converting InversionPopulation to PermuPopulation: {}", e),
+            }
+        });
+        Ok(())
+    }
+    
 }
 
 impl<T> fmt::Display for RimPopulation<T> where 
