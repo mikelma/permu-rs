@@ -39,8 +39,11 @@ impl TryFrom<&str> for ProblemType {
 /// Every instance contains its dimension and one or more matrix.
 #[derive(Debug)]
 pub enum ProblemInstance {
-    Qap(usize, Vec<Vec<usize>>, Vec<Vec<usize>>),
-    Pfsp(usize, Vec<Vec<usize>>),
+    /// Holds a Quadratic Assignment Problem (QAP) instance
+    Qap(usize, Vec<Vec<usize>>),
+    /// Holds a Permutation Flowshop Scheduling Problem (PFSP) instance
+    Pfsp(usize, Vec<Vec<usize>>, Vec<Vec<usize>>),
+    /// Holds a  instance Linear Ordering Problem (LOP) instance
     Lop(usize, Vec<Vec<usize>>),
 }
 
@@ -48,41 +51,46 @@ impl ProblemInstance {
     /// Returns a `str` with the name of the instance.
     pub fn name(&self) -> &str {
         match *self {
-            ProblemInstance::Qap(_, _, _) => "QAP",
-            ProblemInstance::Pfsp(_, _) => "PFSP",
+            ProblemInstance::Qap(_, _) => "QAP",
+            ProblemInstance::Pfsp(_, _, _) => "PFSP",
             ProblemInstance::Lop(_, _) => "PFSP",
         } 
     }  
 
-    fn load_instance(path: &str) -> Result<ProblemInstance, Error> {
+    pub fn load_instance(path: &str) -> Result<ProblemInstance, Error> {
         // Determine problem's type
         // Split path's name and extension
         match ProblemType::try_from(path)? {
-            ProblemType::Qap => unimplemented!(),
-            ProblemType::Pfsp => pfsp::load(path),
+            ProblemType::Qap => qap::load(path),
+            ProblemType::Pfsp => unimplemented!(),
             ProblemType::Lop => lop::load(path),
         }
     }
 }
 
 /// Module for the Quadratic Assignment Problem (QAP)
-pub mod qap {
-
-}
-
-/// Module for the Permutation Flowshop Problem (Pfsp)
-pub mod pfsp {
+mod qap {
 
     use crate::problems::ProblemInstance;
     use crate::errors::Error;
     use crate::problems::lop;
-
+    
+    /// Load a QAP instance from a given file path.
+    //
+    // NOTE: As LOP instances are read as QAP files,
+    // this methos uses LOP's load method to load a LOP instance.
     pub fn load(path: &str) -> Result<ProblemInstance, Error> {
+        // Read the LOP instance as a QAP instance
         if let ProblemInstance::Lop(n, matrix) = lop::load(path)? {
-            return Ok(ProblemInstance::Pfsp(n, matrix));
+            // Convert the ProblemInstance to Qap type
+            return Ok(ProblemInstance::Qap(n, matrix));
         }
         unreachable!();
     }
+}
+
+/// Module for the Permutation Flowshop Scheduling Problem (Pfsp)
+pub mod pfsp {
 }
 
 /// Module for the Linear Ordering Problem (LOP)
