@@ -10,6 +10,7 @@ use std::fmt;
 pub mod permutation;
 pub mod inversion;
 pub mod rim;
+pub mod problems;
 
 // Import errors
 pub mod errors;

@@ -1,4 +1,5 @@
 use std::fmt;
+use std::io;
 
 /// Contains all errors `permu-rs` functions can return.
 #[derive(Debug)]
@@ -9,6 +10,8 @@ pub enum Error {
     NotPermutation,     
     /// Error to return when an incorrect `Distribution` type is given.
     IncorrectDistrType,
+    /// IO error containing a std::io::Error that is caused
+    Io(io::Error)
 }
 
 impl fmt::Display for Error {
@@ -17,10 +20,17 @@ impl fmt::Display for Error {
             Error::LengthError => write!(f, "LenghtError: Please check the shape of the given argument"),
             Error::NotPermutation => write!(f, "NotPermutation: permutation expected but no permutation vector was found"),
             Error::IncorrectDistrType => write!(f, "IncorrectDistrType: Incorrect distribution given"),
+            Error::Io(err) => write!(f, "IO Error: {}", err),
         }
     }
 }
 
+// Implement io error to permu-rs error conversion
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Error {
+        Error::Io(err)
+    }
+}
 /*
 /// Error type to return when transforming between representations and the 
 /// length of one of the vectors is not correct
