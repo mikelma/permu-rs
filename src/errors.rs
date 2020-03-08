@@ -10,6 +10,8 @@ pub enum Error {
     NotPermutation,     
     /// Error to return when an incorrect `Distribution` type is given.
     IncorrectDistrType,
+    /// Error to return when a parsing error occurs.
+    ParseError,
     /// IO error containing a std::io::Error that is caused
     Io(io::Error)
 }
@@ -20,6 +22,7 @@ impl fmt::Display for Error {
             Error::LengthError => write!(f, "LenghtError: Please check the shape of the given argument"),
             Error::NotPermutation => write!(f, "NotPermutation: permutation expected but no permutation vector was found"),
             Error::IncorrectDistrType => write!(f, "IncorrectDistrType: Incorrect distribution given"),
+            Error::ParseError => write!(f, "ParseError: Error occurred during a parse operation"),
             Error::Io(err) => write!(f, "IO Error: {}", err),
         }
     }
