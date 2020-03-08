@@ -164,6 +164,106 @@ impl Problem for Qap {
     }
 }
 
+pub struct Pfsp {
+    size: usize, // Equal to number of jobs in the problem
+    n_machines: usize,
+    matrix: Vec<Vec<usize>>,
+}
+impl Problem for Pfsp {
+
+    fn load(path: &str) -> Result<Box<Self>, Error> {
+        // Open the file
+        let file = File::open(path)?;
+        let mut reader = BufReader::new(file);
+        
+        // Read size lines from matrix
+        let mut size_str = String::new();
+        let _n = reader.read_line(&mut size_str); // Ignore first line
+        size_str.clear();
+        let _n = reader.read_line(&mut size_str); // Get size
+        
+        // Parse instance's sizes
+        let mut splitted = size_str.split_whitespace();
+        let mut count = 0;
+        let mut sizes = vec![]; // n_jobs and n_machines
+        while count < 2 {
+            if let Some(item) = splitted.next() {
+                let num: usize = match item.trim().parse() {
+                    Ok(n) => n,
+                    Err(_) => continue,
+                };
+
+                sizes.push(num);
+                count += 1;
+
+            } else {
+                return Err(Error::Io(io::Error::new(
+                            io::ErrorKind::InvalidInput, 
+                            "Cannot find size inside instance file")));
+            }
+        }
+        // Ignore a line
+        let _n = reader.read_line(&mut size_str);
+
+        // Read the matrix
+        let matrix = Self::lines2matrix(&mut reader, sizes[1], sizes[0])?;
+        Ok(Box::new(Pfsp { size: sizes[0], n_machines: sizes[1], matrix }))
+    }
+
+    fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
+        where T :
+            Copy +
+            From<u8> +
+            TryFrom<usize> +
+            TryInto<usize> +
+            // PartialEq<T> +
+            Eq +
+            SampleRange +
+            PartialOrd +
+            Sub +
+            Display +
+            Debug {
+
+        // Check if solution length is correct
+        if solution.len() != self.size {
+            return Err(Error::LengthError);
+        }
+
+        use std::cmp::max; // NOTE: Remove use from here
+
+        let mut tft = 0;
+        let mut b = vec![0;self.n_machines];  
+
+        for (job_i, job_n) in solution.permu.iter().enumerate() {
+            let mut pt = 0;
+            for machine in 0..self.n_machines {
+
+                let job: usize = match T::try_into(*job_n) {
+                    Ok(n) => n,
+                    Err(_) => return Err(Error::ParseError),
+                };
+
+                if job_i == 0 && machine == 0 {
+                    pt = self.matrix[machine][job];
+                }
+                else if job_i > 0 && machine == 0 {
+                    pt = b[machine] + self.matrix[machine][job];
+                }
+                else if job_i == 0 && machine > 0 {
+                    pt = b[machine-1] + self.matrix[machine][job];
+                }
+                else if job_i > 0 && machine > 0 {
+                    pt = max(b[machine-1], b[machine]) + self.matrix[machine][job];
+                }
+
+                b[machine] = pt;
+            }
+            tft += pt;
+        }
+        Ok(tft)
+    }
+}
+
 /// Linear Ordering Problem (LOP)
 pub struct Lop {
     size: usize,
@@ -185,31 +285,6 @@ impl Problem for Lop {
             .parse()
             .unwrap();
 
-        // Parse each line as a row in the instance matrix
-        /*
-        let mut matrix: Vec<Vec<usize>>= vec![]; // Init instance's matrix
-        for line in reader.lines() {
-            let mut row: Vec<usize> = Vec::with_capacity(size);
-            for str_num in line?.split_whitespace() {
-                row.push(str_num.trim().parse().unwrap());
-            }
-            // Check row length
-            if row.len() != size {
-                return Err(Error::Io(
-                        io::Error::new(io::ErrorKind::InvalidData, 
-                            "All rows must have the same length as the instance size")));
-            }
-            matrix.push(row);
-        }
-
-        // Check for matrix size, must be equal to instance's size
-        if matrix.len() != size {
-            return Err(Error::Io(
-                    io::Error::new(io::ErrorKind::InvalidData, 
-                        "Matrix length must be equal to instance size")));
-        }
-        */
-
         let matrix = Self::lines2matrix(&mut reader, size, size)?;
 
         Ok(Box::new(Lop {size, matrix}))
@@ -228,7 +303,6 @@ impl Problem for Lop {
             Display + // NOTE : For debugging
             Debug 
     {
-
         // Check if the permu's and length and instance's size are correct
         if permu.len() != self.size {
             return Err(Error::LengthError);
@@ -290,6 +364,23 @@ mod test {
 
         let permu = Permutation::<u8>::random(100);
         let lop = Qap::load(instance_path).unwrap(); 
+
+        println!("permu fitness: {}", lop.evaluate(&permu).unwrap());
+    }
+
+    #[test]
+    fn read_pfsp() {
+        let instance_path = "instances/PFSP/tai100_20_0.fsp";
+
+        let ptype: ProblemType = instance_path.try_into().unwrap(); 
+        
+        if let ProblemType::Pfsp = ptype {
+        } else {
+            panic!("The instace type is not LOP");
+        }
+
+        let permu = Permutation::<u8>::random(100);
+        let lop = Pfsp::load(instance_path).unwrap(); 
 
         println!("permu fitness: {}", lop.evaluate(&permu).unwrap());
     }
