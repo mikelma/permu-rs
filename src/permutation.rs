@@ -7,7 +7,7 @@ use fmt::{Debug, Display};
 use rand::Rng;
 
 use crate::{Population, Distribution, errors::Error };
-use crate::inversion::{Inversion, InversionPopulation};
+// use crate::inversion::{Inversion, InversionPopulation};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]
@@ -170,6 +170,7 @@ impl<T> Permutation<T> where
         })
     }
     
+    /*
     /// Returns `Result` containing a `Inversion` based on the `Permutation`.
     ///
     /// # Error
@@ -214,6 +215,7 @@ impl<T> Permutation<T> where
     pub fn from_inversion(inversion: &Inversion<T>, out: &mut Permutation<T>) -> Result<(), Error> {
         Inversion::to_permu(&inversion,out)
     }
+    */
 }
 
 /// Population of `Permutations`.
@@ -314,6 +316,7 @@ impl<T> PermuPopulation<T> where
         PermuPopulation { population : pop, size : size}
     }
     
+    /*
     /// Fills a given `InversionPopulation` with `inversion` representations from the
     /// `PermuPopulation`. 
     /// 
@@ -341,6 +344,7 @@ impl<T> PermuPopulation<T> where
         InversionPopulation::from_permus(&self, inv_pop)?;
         Ok(()) 
     } 
+    */
 }
 
 impl<T> Population for PermuPopulation<T> where 
