@@ -27,8 +27,8 @@ impl<T> Permutation<T> where
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    Display + // NOTE : For debugging
-    Debug, // NOTE : For debugging
+    Display +
+    Debug,
 {
 
     /// Returns the length of the inner permutation vector.
@@ -235,8 +235,8 @@ impl<T> PermuPopulation<T> where
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    Display + // NOTE : For debugging
-    Debug, // NOTE : For debugging
+    Display +
+    Debug,
 {
     /// Returns a `PermuPopulation` created from a vector of `Permutation`.
     ///
@@ -353,8 +353,8 @@ impl<T> Population for PermuPopulation<T> where
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    Display + // NOTE : For debugging
-    Debug, // NOTE : For debugging
+    Display +
+    Debug,
 {
     
     /// Implementation of `learn` method for `PermuPopulation`.
