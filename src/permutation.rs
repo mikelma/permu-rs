@@ -216,6 +216,57 @@ impl<T> Permutation<T> where
         Inversion::to_permu(&inversion,out)
     }
     */
+    
+    /// Fills a given output `Permutation` with the inverted permutation of the current
+    /// permutation. inverted(permutation) = permutation^(-1).
+    ///
+    /// # Errors
+    /// Returns a `LengthError` if the both permutations are not of the same length. 
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::Permutation;
+    /// // Init permutations
+    /// let permu = Permutation::<u8>::from_vec(vec![0,2,3,1]).unwrap();
+    /// let target = Permutation::<u8>::from_vec(vec![0,3,1,2]).unwrap();
+    /// // Target permutation, filled with zeros
+    /// let mut output = Permutation::from_vec_unsec(vec![0u8; permu.len()]);
+    ///
+    /// // Calculate the inverted permutation of `permu`
+    /// permu.invert(&mut output).unwrap();
+    ///
+    /// println!("permu: {:?}", permu);
+    /// println!("invert: {:?}", output);
+    /// assert_eq!(target, output);
+    /// ```
+    pub fn invert(&self, output: &mut Permutation<T>) -> Result<(), Error> {
+        // Lengths of both permutations must match 
+        if self.len() != output.len() {
+            return Err(Error::LengthError);
+        }
+        // Calculate the inverted permutation and store it in output permu
+        (0..self.len()).for_each(|e| {
+            // Whats the index of e in the permutation
+            let index = self.permu.iter()
+                .position(|&x| x == match e.try_into() {
+                    Ok(v) => v,
+                    Err(_) => unreachable!(),
+                });
+
+            // Convert index (usize) to T type, this should not fail
+            if let Some(index) = index {
+                let index = match T::try_from(index) {
+                    Ok(i) => i,
+                    Err(_) => unreachable!(),
+                };
+
+                output.permu[e] = index;
+            } else {
+                unreachable!();
+            }
+        });
+        Ok(())
+    }
 }
 
 /// Population of `Permutations`.
