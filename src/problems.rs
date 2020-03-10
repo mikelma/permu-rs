@@ -6,6 +6,8 @@ use std::io::{BufReader, BufRead};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{Display, Debug};
 use std::fs::File;
+use std::cmp::max;
+
 
 use rand::distributions::range::SampleRange;
 use std::ops::Sub;
@@ -61,7 +63,7 @@ pub trait Problem {
             SampleRange +
             PartialOrd +
             Sub +
-            Display + // NOTE : For debugging
+            Display +
             Debug;
 
     fn lines2matrix(buffer: &mut BufReader<File>, n_lines: usize, n_elems: usize) -> Result<Vec<Vec<usize>>, Error> {
@@ -133,7 +135,7 @@ impl Problem for Qap {
             SampleRange +
             PartialOrd +
             Sub +
-            Display + // NOTE : For debugging
+            Display +
             Debug {
 
         // Check if the solution's length matches with the size of the problem
@@ -229,8 +231,6 @@ impl Problem for Pfsp {
             return Err(Error::LengthError);
         }
 
-        use std::cmp::max; // NOTE: Remove use from here
-
         let mut tft = 0;
         let mut b = vec![0;self.n_machines];  
 
@@ -300,7 +300,7 @@ impl Problem for Lop {
             SampleRange +
             PartialOrd +
             Sub +
-            Display + // NOTE : For debugging
+            Display +
             Debug 
     {
         // Check if the permu's and length and instance's size are correct
@@ -309,8 +309,7 @@ impl Problem for Lop {
         }
         
         let mut fitness = 0;
-        (0..self.size)
-            .for_each(|i| {
+        (0..self.size-1).for_each(|i| {
                 (i+1..self.size).for_each(|j| {
 
                     let elem1 = match permu.permu[i].try_into() {
