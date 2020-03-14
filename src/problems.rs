@@ -1,5 +1,8 @@
-//! The `problems`module contains other modules for different permutation based problems.
-// TODO: Explain the implemented problems with more detail
+//! The `problems`module contains permutation based problem definitions. This problems are, the
+//! quadratic assignment problem (QAP), permutation flowshop scheduling problem (PFSP) and the linear ordering
+//! problem (LOP). This module also includes a common definition of a problem, the `Problem`trait.
+//! Finally, the `ProblemType`enum is provided in order to get the problem type from the instance's
+//! name.
 
 use std::io;
 use std::io::{BufReader, BufRead};
@@ -8,14 +11,14 @@ use std::fmt::{Display, Debug};
 use std::fs::File;
 use std::cmp::max;
 
-
 use rand::distributions::range::SampleRange;
 use std::ops::Sub;
 
 use crate::errors::Error;
 use crate::permutation::Permutation;
 
-/// Contains all problem types defined in this crate.
+/// Contains all problem types defined in this crate. Implents `TryFrom<&str>` trait, so it's
+/// useful t get the problem type from the instance's name.
 pub enum ProblemType {
     Qap,
     Pfsp,
@@ -48,24 +51,24 @@ impl TryFrom<&str> for ProblemType {
 
 /// Contains basic functions all problem's must include.
 pub trait Problem {
-    /// Loads an instance of a problem from an specified file's path.
+    /// Loads an instance of a problem from a specified path.
     fn load(path: &str) -> Result<Box<Self>, Error>;
 
-    /// Evaluates a given solution returning it's fitness value.
+    /// Evaluates a given solution (`Permutation`) returning it's fitness value.
     fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
         where T :
             Copy +
             From<u8> +
             TryFrom<usize> +
             TryInto<usize> +
-            // PartialEq<T> +
             Eq +
             SampleRange +
             PartialOrd +
             Sub +
             Display +
             Debug;
-
+    
+    // Utility to convert a buffer into a matrix of the specified shape.
     fn lines2matrix(buffer: &mut BufReader<File>, n_lines: usize, n_elems: usize) -> Result<Vec<Vec<usize>>, Error> {
         // Init the matrix
         let mut matrix = vec![Vec::with_capacity(n_elems); n_lines];
@@ -97,6 +100,7 @@ pub trait Problem {
     }
 }
 
+/// Quadratic Assignment Problem definition.
 pub struct Qap {
     size: usize,
     distance: Vec<Vec<usize>>,
@@ -104,7 +108,7 @@ pub struct Qap {
 }
 
 impl Problem for Qap {
-
+    
     fn load(path: &str) -> Result<Box<Self>, Error> {
         // Open the file
         let file = File::open(path)?;
@@ -166,6 +170,7 @@ impl Problem for Qap {
     }
 }
 
+/// Permutation Flowshop Scheduling Problem definition
 pub struct Pfsp {
     size: usize, // Equal to number of jobs in the problem
     n_machines: usize,
@@ -264,7 +269,7 @@ impl Problem for Pfsp {
     }
 }
 
-/// Linear Ordering Problem (LOP)
+/// Linear Ordering Problem definition 
 pub struct Lop {
     size: usize,
     pub matrix: Vec<Vec<usize>>,
