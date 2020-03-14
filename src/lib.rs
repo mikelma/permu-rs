@@ -16,6 +16,31 @@ pub mod problems;
 pub mod errors;
 use errors::Error;
 
+use fmt::{Debug, Display};
+use std::convert::TryFrom;
+use std::convert::TryInto;
+use rand::distributions::range::SampleRange;
+use std::ops::Sub;
+
+pub trait Item: 
+    Copy +
+    From<u8> +
+    TryFrom<usize> +
+    TryInto<usize> +
+    Debug + 
+    Display + 
+    SampleRange +
+    PartialOrd +
+    Sub +
+    Eq +
+    Sized +
+    PartialEq
+{}
+
+impl Item for u8 {}
+impl Item for u16 {}
+impl Item for u32 {}
+
 /// Contains the methods a `Population` should have.
 pub trait Population {
     
