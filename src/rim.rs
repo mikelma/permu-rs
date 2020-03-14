@@ -21,14 +21,12 @@ impl<T> Rim<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    //PartialEq<T> +
     Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    // Into<usize> +
-    Display + // NOTE : For debugging
-    Debug // NOTE : For debugging
+    Display +
+    Debug
 {
     /// Creates a Inversion object from the vector.
     ///
@@ -186,14 +184,12 @@ impl<T> RimPopulation<T> where
     From<u8> +
     TryFrom<usize> +
     TryInto<usize> +
-    // PartialEq<T> +
     Eq +
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    // Into<usize> +
-    Display + // NOTE : For debugging
-    Debug, // NOTE : For debugging
+    Display +
+    Debug,
 {
     /// Creates an `InversionPopulation` based on a given matrix.
     ///
@@ -352,8 +348,8 @@ impl<T> Population for RimPopulation<T> where
     rand::distributions::range::SampleRange +
     std::cmp::PartialOrd +
     std::ops::Sub +
-    Display + // NOTE : For debugging
-    Debug, // NOTE : For debugging
+    Display +
+    Debug,
 {
 
     /// Implementation of `learn` method for `RimPopulation`.
