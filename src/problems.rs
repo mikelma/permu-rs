@@ -52,7 +52,10 @@ impl TryFrom<&str> for ProblemType {
 /// Contains basic functions all problem's must include.
 pub trait Problem {
     /// Loads an instance of a problem from a specified path.
-    fn load(path: &str) -> Result<Box<Self>, Error>;
+    fn load(path: &str) -> Result<Box<Self>, Error> where Self: Sized;
+    
+    /// Returns the size of the instance. Solutions for the Problem must be of the same size.
+    fn size(&self) -> usize;
 
     /// Evaluates a given solution (`Permutation`) returning it's fitness value.
     fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
@@ -69,7 +72,8 @@ pub trait Problem {
             Debug;
     
     // Utility to convert a buffer into a matrix of the specified shape.
-    fn lines2matrix(buffer: &mut BufReader<File>, n_lines: usize, n_elems: usize) -> Result<Vec<Vec<usize>>, Error> {
+    #[doc(hidden)]
+    fn lines2matrix(buffer: &mut BufReader<File>, n_lines: usize, n_elems: usize) -> Result<Vec<Vec<usize>>, Error> where Self: Sized {
         // Init the matrix
         let mut matrix = vec![Vec::with_capacity(n_elems); n_lines];
 
@@ -128,13 +132,16 @@ impl Problem for Qap {
         Ok(Box::new(Qap { size, distance, flow }))
     }
 
+    fn size(&self) -> usize {
+        self.size
+    }
+
     fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
         where T :
             Copy +
             From<u8> +
             TryFrom<usize> +
             TryInto<usize> +
-            // PartialEq<T> +
             Eq +
             SampleRange +
             PartialOrd +
@@ -176,6 +183,7 @@ pub struct Pfsp {
     n_machines: usize,
     matrix: Vec<Vec<usize>>,
 }
+
 impl Problem for Pfsp {
 
     fn load(path: &str) -> Result<Box<Self>, Error> {
@@ -217,13 +225,16 @@ impl Problem for Pfsp {
         Ok(Box::new(Pfsp { size: sizes[0], n_machines: sizes[1], matrix }))
     }
 
+    fn size(&self) -> usize {
+        self.size
+    }
+
     fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
         where T :
             Copy +
             From<u8> +
             TryFrom<usize> +
             TryInto<usize> +
-            // PartialEq<T> +
             Eq +
             SampleRange +
             PartialOrd +
@@ -272,7 +283,7 @@ impl Problem for Pfsp {
 /// Linear Ordering Problem definition 
 pub struct Lop {
     size: usize,
-    pub matrix: Vec<Vec<usize>>,
+    matrix: Vec<Vec<usize>>,
 }
 
 impl Problem for Lop {
@@ -295,6 +306,10 @@ impl Problem for Lop {
         Ok(Box::new(Lop {size, matrix}))
     }
     
+    fn size(&self) -> usize {
+        self.size
+    }
+
     fn evaluate<T>(&self, permu: &Permutation<T>) -> Result<usize, Error>
         where T :
             Copy +
@@ -387,5 +402,30 @@ mod test {
         let lop = Pfsp::load(instance_path).unwrap(); 
 
         println!("permu fitness: {}", lop.evaluate(&permu).unwrap());
+    }
+
+    #[test]
+    fn test_load() {
+        use crate::permutation::PermuPopulation;
+
+        let paths = ["PFSP/tai100_20_0.fsp", 
+                     "QAP/tai100a.dat",
+                     "/LOP/N-be75eec_150.lop"];
+        for name in paths.iter() {
+            let path = format!("instances/{}", name);
+
+            let instance: Box< dyn Problem> = match ProblemType::try_from(path.as_str()) {
+                Ok(ProblemType::Qap) => Qap::load(&path).unwrap(),
+                Ok(ProblemType::Pfsp) => Pfsp::load(&path).unwrap(),
+                Ok(ProblemType::Lop) => Lop::load(&path).unwrap(), 
+                Err(err) => panic!(err),
+            };
+            
+            let pop = PermuPopulation::<u16>::random(100, instance.size());
+
+            for solution in pop.population.iter() {
+                let fitness = instance.evaluate(&solution).unwrap();
+            }
+        }
     }
 }
