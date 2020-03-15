@@ -1,8 +1,8 @@
-//! The `problems`module contains permutation based problem definitions. This problems are, the
+//! The `problems` module contains some permutation based problem definitions. This problems are, the
 //! quadratic assignment problem (QAP), permutation flowshop scheduling problem (PFSP) and the linear ordering
-//! problem (LOP). This module also includes a common definition of a problem, the `Problem`trait.
-//! Finally, the `ProblemType`enum is provided in order to get the problem type from the instance's
-//! name.
+//! problem (LOP). 
+//! Problems are intended to be used through the `ProblemInstance` enum. Finally, the `ProblemType`enum is 
+//! provided in order to get the problem type from the instance's name.
 
 use std::io;
 use std::io::{BufReader, BufRead};
@@ -18,7 +18,7 @@ use crate::errors::Error;
 use crate::permutation::PermuPopulation;
 
 /// Contains all problem types defined in this crate. Implents `TryFrom<&str>` trait, so it's
-/// useful t get the problem type from the instance's name.
+/// useful to get the problem type from the instance's name.
 pub enum ProblemType {
     Qap,
     Pfsp,
@@ -49,15 +49,20 @@ impl TryFrom<&str> for ProblemType {
     }
 }
 
-
+/// This enum contains problem definitions.  
 pub enum ProblemInstance {
+    /// Quadratic Assignment Problem (QAP)
     Qap(usize, Vec<Vec<usize>>, Vec<Vec<usize>>),
+    /// Permutation Flowshop Scheduling Problem (PFSP) 
     Pfsp(usize, usize, Vec<Vec<usize>>),
+    /// Linear Ordering Problem (LOP) 
     Lop(usize, Vec<Vec<usize>>),
 }
 
 impl ProblemInstance {
-
+    
+    /// Returns the size of the instance. All soltions must 
+    /// be of the length of the problem's size.
     pub fn size(&self) -> usize {
         match self {
             ProblemInstance::Qap(n, _, _) => *n,
@@ -65,7 +70,42 @@ impl ProblemInstance {
             ProblemInstance::Lop(n, _) => *n,
         } 
     }
-
+    
+    /// Loads a `ProblemInstance` from a file given as a path.
+    ///
+    /// # Errors
+    /// Returns an `Error::Io` error if an error occurs loading the problem 
+    /// instance from the given path.
+    pub fn load(path: &str) -> Result<Self, Error> {
+        match ProblemType::try_from(path) {
+            Ok(ProblemType::Qap) => Ok(Qap::load(&path)?),
+            Ok(ProblemType::Pfsp) => Ok(Pfsp::load(&path)?),
+            Ok(ProblemType::Lop) => Ok(Lop::load(&path)?), 
+            Err(err) => panic!(err),
+        }
+    }
+    
+    /// Evaluates each solution of a given `PermuPopulation` and stores the fitness values inside a
+    /// given fitness vector.
+    ///
+    /// # Example
+    /// ```
+    /// use permu_rs::permutation::PermuPopulation;
+    /// use permu_rs::problems::ProblemInstance;
+    ///
+    /// let paths = ["PFSP/tai100_20_0.fsp", 
+    ///              "QAP/tai100a.dat",
+    ///              "/LOP/N-be75eec_150.lop"];
+    /// for name in paths.iter() {
+    ///     let path = format!("instances/{}", name);
+    ///     let instance = ProblemInstance::load(&path).unwrap();
+    ///     
+    ///     let pop = PermuPopulation::<u16>::random(100, instance.size());
+    ///     let mut fitness = vec![0; 100];
+    ///
+    ///     instance.evaluate(&pop, &mut fitness).unwrap();
+    /// }
+    /// ```
     pub fn evaluate<T>(&self, 
             solutions: &PermuPopulation<T>, 
             fitness_vec: &mut Vec<usize>) -> Result<(), Error>
@@ -90,6 +130,7 @@ impl ProblemInstance {
 }
 
 /// Contains basic functions all problem's must include.
+#[doc(hidden)]
 trait Problem {
     /// Loads an instance of a problem from a specified path.
     fn load(path: &str) -> Result<ProblemInstance, Error>;
@@ -111,7 +152,6 @@ trait Problem {
             Debug;
     
     // Utility to convert a buffer into a matrix of the specified shape.
-    #[doc(hidden)]
     fn lines2matrix(buffer: &mut BufReader<File>, 
         n_lines: usize, 
         n_elems: usize) -> Result<Vec<Vec<usize>>, Error> {
@@ -147,6 +187,7 @@ trait Problem {
 }
 
 /// Quadratic Assignment Problem definition.
+#[doc(hidden)]
 struct Qap {}
 
 impl Problem for Qap {
@@ -223,6 +264,7 @@ impl Problem for Qap {
 }
 
 /// Permutation Flowshop Scheduling Problem definition
+#[doc(hidden)]
 struct Pfsp {}
 
 impl Problem for Pfsp {
@@ -328,6 +370,7 @@ impl Problem for Pfsp {
 }
 
 /// Linear Ordering Problem definition 
+#[doc(hidden)]
 struct Lop {}
 
 impl Problem for Lop {
