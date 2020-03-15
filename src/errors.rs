@@ -12,8 +12,10 @@ pub enum Error {
     IncorrectDistrType,
     /// Error to return when a parsing error occurs.
     ParseError,
-    /// IO error containing a std::io::Error that is caused
-    Io(io::Error)
+    /// IO error containing a std::io::Error that is caused.
+    Io(io::Error),
+    /// Error to return when an incorrect problem instance is given.
+    IncorrectProblemInstance,
 }
 
 impl fmt::Display for Error {
@@ -24,6 +26,7 @@ impl fmt::Display for Error {
             Error::IncorrectDistrType => write!(f, "IncorrectDistrType: Incorrect distribution given"),
             Error::ParseError => write!(f, "ParseError: Error occurred during a parse operation"),
             Error::Io(err) => write!(f, "IO Error: {}", err),
+            Error::IncorrectProblemInstance => write!(f, "Incorrect distribution type"),
         }
     }
 }

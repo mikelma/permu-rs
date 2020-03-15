@@ -15,7 +15,7 @@ use rand::distributions::range::SampleRange;
 use std::ops::Sub;
 
 use crate::errors::Error;
-use crate::permutation::Permutation;
+use crate::permutation::PermuPopulation;
 
 /// Contains all problem types defined in this crate. Implents `TryFrom<&str>` trait, so it's
 /// useful t get the problem type from the instance's name.
@@ -49,16 +49,55 @@ impl TryFrom<&str> for ProblemType {
     }
 }
 
-/// Contains basic functions all problem's must include.
-pub trait Problem {
-    /// Loads an instance of a problem from a specified path.
-    fn load(path: &str) -> Result<Box<Self>, Error> where Self: Sized;
-    
-    /// Returns the size of the instance. Solutions for the Problem must be of the same size.
-    fn size(&self) -> usize;
 
+pub enum ProblemInstance {
+    Qap(usize, Vec<Vec<usize>>, Vec<Vec<usize>>),
+    Pfsp(usize, usize, Vec<Vec<usize>>),
+    Lop(usize, Vec<Vec<usize>>),
+}
+
+impl ProblemInstance {
+
+    pub fn size(&self) -> usize {
+        match self {
+            ProblemInstance::Qap(n, _, _) => *n,
+            ProblemInstance::Pfsp(n, _, _) => *n,
+            ProblemInstance::Lop(n, _) => *n,
+        } 
+    }
+
+    pub fn evaluate<T>(&self, 
+            solutions: &PermuPopulation<T>, 
+            fitness_vec: &mut Vec<usize>) -> Result<(), Error>
+        where T :
+            Copy +
+            From<u8> +
+            TryFrom<usize> +
+            TryInto<usize> +
+            Eq +
+            SampleRange +
+            PartialOrd +
+            Sub +
+            Display +
+            Debug 
+    {
+        match self {
+            ProblemInstance::Qap(_,_,_) => Qap::evaluate(self, solutions, fitness_vec),
+            ProblemInstance::Pfsp(_, _,_) => Pfsp::evaluate(self, solutions, fitness_vec),
+            ProblemInstance::Lop(_,_) => Lop::evaluate(self, solutions, fitness_vec),
+        } 
+    }
+}
+
+/// Contains basic functions all problem's must include.
+trait Problem {
+    /// Loads an instance of a problem from a specified path.
+    fn load(path: &str) -> Result<ProblemInstance, Error>;
+    
     /// Evaluates a given solution (`Permutation`) returning it's fitness value.
-    fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
+    fn evaluate<T>(instace: &ProblemInstance, 
+        solutions: &PermuPopulation<T>, 
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -73,7 +112,10 @@ pub trait Problem {
     
     // Utility to convert a buffer into a matrix of the specified shape.
     #[doc(hidden)]
-    fn lines2matrix(buffer: &mut BufReader<File>, n_lines: usize, n_elems: usize) -> Result<Vec<Vec<usize>>, Error> where Self: Sized {
+    fn lines2matrix(buffer: &mut BufReader<File>, 
+        n_lines: usize, 
+        n_elems: usize) -> Result<Vec<Vec<usize>>, Error> {
+        
         // Init the matrix
         let mut matrix = vec![Vec::with_capacity(n_elems); n_lines];
 
@@ -105,15 +147,11 @@ pub trait Problem {
 }
 
 /// Quadratic Assignment Problem definition.
-pub struct Qap {
-    size: usize,
-    distance: Vec<Vec<usize>>,
-    flow: Vec<Vec<usize>>,
-}
+struct Qap {}
 
 impl Problem for Qap {
     
-    fn load(path: &str) -> Result<Box<Self>, Error> {
+    fn load(path: &str) -> Result<ProblemInstance, Error> {
         // Open the file
         let file = File::open(path)?;
         let mut reader = BufReader::new(file);
@@ -129,14 +167,12 @@ impl Problem for Qap {
         let distance = Self::lines2matrix(&mut reader, size, size)?;
         let flow = Self::lines2matrix(&mut reader, size, size)?;
 
-        Ok(Box::new(Qap { size, distance, flow }))
+        Ok(ProblemInstance::Qap(size, distance, flow))
     }
 
-    fn size(&self) -> usize {
-        self.size
-    }
-
-    fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
+    fn evaluate<T>(instace: &ProblemInstance, 
+        solutions: &PermuPopulation<T>, 
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -148,45 +184,50 @@ impl Problem for Qap {
             Sub +
             Display +
             Debug {
+        
+        // Check instance type and get instace parameters
+        let (size, distance, flow) = match instace {
+            ProblemInstance::Qap(size, dist, flow) => (size, dist, flow),
+            _ => return Err(Error::IncorrectProblemInstance),
+        };
 
         // Check if the solution's length matches with the size of the problem
-        if solution.len() != self.size {
+        if solutions.population[0].len() != *size {
             return Err(Error::LengthError);
         }
 
-        let mut fitness = 0; 
-        for i in 0..self.size {
-            for j in 0..self.size {
+        for (index, solution) in solutions.population.iter().enumerate() {
+            let mut fitness = 0; 
+            for i in 0..*size {
+                for j in 0..*size {
 
-                let fact_a: usize = match solution.permu[i].try_into() {
-                    Ok(n) => n,
-                    Err(_) => return Err(Error::ParseError),
-                };
-                let fact_b: usize = match solution.permu[j].try_into() {
-                    Ok(n) => n,
-                    Err(_) => return Err(Error::ParseError),
-                };
+                    let fact_a: usize = match solution.permu[i].try_into() {
+                        Ok(n) => n,
+                        Err(_) => return Err(Error::ParseError),
+                    };
+                    let fact_b: usize = match solution.permu[j].try_into() {
+                        Ok(n) => n,
+                        Err(_) => return Err(Error::ParseError),
+                    };
 
-                let dist_ab = self.distance[i][j];
-                let flow_ab = self.flow[fact_a][fact_b];
+                    let dist_ab = distance[i][j];
+                    let flow_ab = flow[fact_a][fact_b];
 
-                fitness += dist_ab*flow_ab;
+                    fitness += dist_ab*flow_ab;
+                }
             }
+            fitness_vec[index] = fitness;
         }
-        Ok(fitness)
+        Ok(())
     }
 }
 
 /// Permutation Flowshop Scheduling Problem definition
-pub struct Pfsp {
-    size: usize, // Equal to number of jobs in the problem
-    n_machines: usize,
-    matrix: Vec<Vec<usize>>,
-}
+struct Pfsp {}
 
 impl Problem for Pfsp {
 
-    fn load(path: &str) -> Result<Box<Self>, Error> {
+    fn load(path: &str) -> Result<ProblemInstance, Error> {
         // Open the file
         let file = File::open(path)?;
         let mut reader = BufReader::new(file);
@@ -222,14 +263,12 @@ impl Problem for Pfsp {
 
         // Read the matrix
         let matrix = Self::lines2matrix(&mut reader, sizes[1], sizes[0])?;
-        Ok(Box::new(Pfsp { size: sizes[0], n_machines: sizes[1], matrix }))
+        Ok(ProblemInstance::Pfsp(sizes[0], sizes[1], matrix))
     }
 
-    fn size(&self) -> usize {
-        self.size
-    }
-
-    fn evaluate<T>(&self, solution: &Permutation<T>) -> Result<usize, Error>
+    fn evaluate<T>(instace: &ProblemInstance, 
+        solutions: &PermuPopulation<T>, 
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -242,53 +281,58 @@ impl Problem for Pfsp {
             Display +
             Debug {
 
+        // Check instance type and get params 
+        let (size, n_machines, matrix) = match instace {
+            ProblemInstance::Pfsp(n, m, mat) => (n, m, mat),
+            _ => return Err(Error::IncorrectProblemInstance),
+        };
+
         // Check if solution length is correct
-        if solution.len() != self.size {
+        if solutions.population[0].len() != *size {
             return Err(Error::LengthError);
         }
 
-        let mut tft = 0;
-        let mut b = vec![0;self.n_machines];  
+        for (index, solution) in solutions.population.iter().enumerate() {
+            let mut tft = 0;
+            let mut b = vec![0;*n_machines];  
+            for (job_i, job_n) in solution.permu.iter().enumerate() {
+                let mut pt = 0;
+                for machine in 0..*n_machines {
 
-        for (job_i, job_n) in solution.permu.iter().enumerate() {
-            let mut pt = 0;
-            for machine in 0..self.n_machines {
+                    let job: usize = match T::try_into(*job_n) {
+                        Ok(n) => n,
+                        Err(_) => return Err(Error::ParseError),
+                    };
 
-                let job: usize = match T::try_into(*job_n) {
-                    Ok(n) => n,
-                    Err(_) => return Err(Error::ParseError),
-                };
+                    if job_i == 0 && machine == 0 {
+                        pt = matrix[machine][job];
+                    }
+                    else if job_i > 0 && machine == 0 {
+                        pt = b[machine] + matrix[machine][job];
+                    }
+                    else if job_i == 0 && machine > 0 {
+                        pt = b[machine-1] + matrix[machine][job];
+                    }
+                    else if job_i > 0 && machine > 0 {
+                        pt = max(b[machine-1], b[machine]) + matrix[machine][job];
+                    }
 
-                if job_i == 0 && machine == 0 {
-                    pt = self.matrix[machine][job];
+                    b[machine] = pt;
                 }
-                else if job_i > 0 && machine == 0 {
-                    pt = b[machine] + self.matrix[machine][job];
-                }
-                else if job_i == 0 && machine > 0 {
-                    pt = b[machine-1] + self.matrix[machine][job];
-                }
-                else if job_i > 0 && machine > 0 {
-                    pt = max(b[machine-1], b[machine]) + self.matrix[machine][job];
-                }
-
-                b[machine] = pt;
+                tft += pt;
             }
-            tft += pt;
+            fitness_vec[index] = tft;
         }
-        Ok(tft)
+        Ok(())
     }
 }
 
 /// Linear Ordering Problem definition 
-pub struct Lop {
-    size: usize,
-    matrix: Vec<Vec<usize>>,
-}
+struct Lop {}
 
 impl Problem for Lop {
 
-    fn load(path: &str) -> Result<Box<Self>, Error> {
+    fn load(path: &str) -> Result<ProblemInstance, Error> {
         // Open the file
         let file = File::open(path)?;
         let mut reader = BufReader::new(file);
@@ -303,14 +347,12 @@ impl Problem for Lop {
 
         let matrix = Self::lines2matrix(&mut reader, size, size)?;
 
-        Ok(Box::new(Lop {size, matrix}))
-    }
-    
-    fn size(&self) -> usize {
-        self.size
+        Ok(ProblemInstance::Lop(size, matrix))
     }
 
-    fn evaluate<T>(&self, permu: &Permutation<T>) -> Result<usize, Error>
+    fn evaluate<T>(instace: &ProblemInstance, 
+        solutions: &PermuPopulation<T>, 
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -323,28 +365,37 @@ impl Problem for Lop {
             Display +
             Debug 
     {
+        // Check instance type and get params 
+        let (size, matrix) = match instace {
+            ProblemInstance::Lop(n, mat) => (n, mat),
+            _ => return Err(Error::IncorrectProblemInstance),
+        };
+
         // Check if the permu's and length and instance's size are correct
-        if permu.len() != self.size {
+        if solutions.population[0].len() != *size {
             return Err(Error::LengthError);
         }
         
-        let mut fitness = 0;
-        (0..self.size-1).for_each(|i| {
-                (i+1..self.size).for_each(|j| {
+        for (index, solution) in solutions.population.iter().enumerate() {
+            let mut fitness = 0;
+            (0..*size-1).for_each(|i| {
+                    (i+1..*size).for_each(|j| {
 
-                    let elem1 = match permu.permu[i].try_into() {
-                        Ok(a) => a,
-                        Err(_) => unreachable!(),
-                    };
-                    let elem2 = match permu.permu[j].try_into() {
-                        Ok(a) => a,
-                        Err(_) => unreachable!(),
-                    };
+                        let elem1 = match solution.permu[i].try_into() {
+                            Ok(a) => a,
+                            Err(_) => unreachable!(),
+                        };
+                        let elem2 = match solution.permu[j].try_into() {
+                            Ok(a) => a,
+                            Err(_) => unreachable!(),
+                        };
 
-                    fitness += self.matrix[elem1][elem2];
+                        fitness += matrix[elem1][elem2];
+                    });
                 });
-            });
-        Ok(fitness) 
+            fitness_vec[index] = fitness;
+        }
+        Ok(()) 
     }
 }
 
@@ -353,7 +404,7 @@ mod test {
 
     use crate::problems::*;
     use std::convert::TryInto;
-    use crate::permutation::Permutation;
+    use crate::permutation::PermuPopulation;
 
     #[test]
     fn read_lop() {
@@ -365,10 +416,14 @@ mod test {
             panic!("The instace type is not LOP");
         }
 
-        let permu = Permutation::<u8>::random(150);
-        let lop = Lop::load(instance_path).unwrap(); 
+        let pop = PermuPopulation::<u8>::random(10, 150);
+        let instance = Lop::load(instance_path).unwrap(); 
+        let mut fitness = vec![0;10];
+
+        instance.evaluate(&pop, &mut fitness).unwrap();
         
-        println!("permu fitness: {}", lop.evaluate(&permu).unwrap());
+        fitness.iter()
+            .for_each(|x| println!("permu fitness: {}", x));
     }
 
     #[test]
@@ -381,10 +436,13 @@ mod test {
             panic!("The instace type is not LOP");
         }
 
-        let permu = Permutation::<u8>::random(100);
-        let lop = Qap::load(instance_path).unwrap(); 
+        let pop = PermuPopulation::<u8>::random(10, 100);
+        let instance = Qap::load(instance_path).unwrap(); 
+        let mut fitness = vec![0;10];
 
-        println!("permu fitness: {}", lop.evaluate(&permu).unwrap());
+        instance.evaluate(&pop, &mut fitness).unwrap();
+        fitness.iter()
+            .for_each(|x| println!("permu fitness: {}", x));
     }
 
     #[test]
@@ -398,10 +456,13 @@ mod test {
             panic!("The instace type is not LOP");
         }
 
-        let permu = Permutation::<u8>::random(100);
-        let lop = Pfsp::load(instance_path).unwrap(); 
+        let pop = PermuPopulation::<u8>::random(10, 100);
+        let instance = Pfsp::load(instance_path).unwrap(); 
+        let mut fitness = vec![0;10];
 
-        println!("permu fitness: {}", lop.evaluate(&permu).unwrap());
+        instance.evaluate(&pop, &mut fitness).unwrap();
+        fitness.iter()
+            .for_each(|x| println!("permu fitness: {}", x));
     }
 
     #[test]
@@ -414,7 +475,7 @@ mod test {
         for name in paths.iter() {
             let path = format!("instances/{}", name);
 
-            let instance: Box< dyn Problem> = match ProblemType::try_from(path.as_str()) {
+            let instance = match ProblemType::try_from(path.as_str()) {
                 Ok(ProblemType::Qap) => Qap::load(&path).unwrap(),
                 Ok(ProblemType::Pfsp) => Pfsp::load(&path).unwrap(),
                 Ok(ProblemType::Lop) => Lop::load(&path).unwrap(), 
@@ -422,10 +483,9 @@ mod test {
             };
             
             let pop = PermuPopulation::<u16>::random(100, instance.size());
+            let mut fitness = vec![0; 100];
 
-            for solution in pop.population.iter() {
-                let fitness = instance.evaluate(&solution).unwrap();
-            }
+            instance.evaluate(&pop, &mut fitness).unwrap();
         }
     }
 }
