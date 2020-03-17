@@ -335,7 +335,6 @@ impl<T> RimPopulation<T> where
 
         Ok(())
     }
-
 }
 
 impl<T> Population<T> for RimPopulation<T> where 
@@ -461,6 +460,11 @@ impl<T> Population<T> for RimPopulation<T> where
 
     fn to_permus(&self, permus: &mut PermuPopulation<T>) -> Result<(), Error> {
         RimPopulation::to_permus(&self, permus)?;
+        Ok(())
+    }
+
+    fn from_permus(&mut self, permus: &PermuPopulation<T>) -> Result<(), Error> {
+        RimPopulation::from_permus(permus, self)?;
         Ok(())
     }
 }

@@ -535,7 +535,7 @@ impl<T> Population<T> for PermuPopulation<T> where
         Ok(())
     }        
     
-    fn to_permus(&self, permus: &mut PermuPopulation<T>) -> Result<(), Error> {
+    fn to_permus(&self, _permus: &mut PermuPopulation<T>) -> Result<(), Error> {
         /*
         // Check if both populations have yhe same size and length 
         if self.size != permus.size || 
@@ -549,6 +549,10 @@ impl<T> Population<T> for PermuPopulation<T> where
         Ok(())
         */
         Err(Error::IncorrectPopulation)
+    }
+
+    fn from_permus(&mut self, _permus: &PermuPopulation<T>) -> Result<(), Error> {
+        Err(Error::IncorrectDistrType)
     }
 
 }

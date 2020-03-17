@@ -478,6 +478,11 @@ impl<T> Population<T> for InversionPopulation<T> where
         InversionPopulation::to_permus(&self, permus)?;
         Ok(())
     }
+
+    fn from_permus(&mut self, permus: &PermuPopulation<T>) -> Result<(), Error> {
+        InversionPopulation::from_permus(permus, self)?;
+        Ok(())
+    }
 }
 
 impl<T> fmt::Display for InversionPopulation<T> where 
