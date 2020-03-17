@@ -16,6 +16,8 @@ pub enum Error {
     Io(io::Error),
     /// Error to return when an incorrect problem instance is given.
     IncorrectProblemInstance,
+    /// Error to return when an incorrect `Population` is given.
+    IncorrectPopulation,
 }
 
 impl fmt::Display for Error {
@@ -27,6 +29,7 @@ impl fmt::Display for Error {
             Error::ParseError => write!(f, "ParseError: Error occurred during a parse operation"),
             Error::Io(err) => write!(f, "IO Error: {}", err),
             Error::IncorrectProblemInstance => write!(f, "Incorrect distribution type"),
+            Error::IncorrectPopulation => write!(f, "Incorrect population given"),
         }
     }
 }
