@@ -535,8 +535,20 @@ impl<T> Population<T> for PermuPopulation<T> where
         Ok(())
     }        
     
-    fn to_permus(&self, _permus: &mut PermuPopulation<T>) -> Result<(), Error> {
+    fn to_permus(&self, permus: &mut PermuPopulation<T>) -> Result<(), Error> {
+        /*
+        // Check if both populations have yhe same size and length 
+        if self.size != permus.size || 
+            self.population[0].len() != permus.population[0].len() {
+            return Err(Error::LengthError);
+        }
+        // Clone self to output permutation population
+        for i in 0..self.size {
+            permus.population[i] = self.population[i].clone();
+        }
         Ok(())
+        */
+        Err(Error::IncorrectPopulation)
     }
 
 }
