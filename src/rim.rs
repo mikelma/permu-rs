@@ -403,13 +403,13 @@ impl<T> Population for RimPopulation<T> where
     /// let mut distr = pop.learn();
     /// println!("Distribution:\n{}", distr);
     ///
-    /// RimPopulation::sample(&mut distr, &mut samples).unwrap();
+    /// samples.sample(&mut distr).unwrap();
     /// println!("Distribution after sampling:\n{}", distr);
     ///
     /// println!("Original population:\n{}", pop);
     /// println!("Sampled population:\n{}", samples);
     /// ```
-    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Error> {
+    fn sample(&mut self, distr: &mut Distribution) -> Result<(), Error> {
         // Check if the given Distribution type is correct
         let (distr, soften) = match distr {
             Distribution::RimDistribution(d, s) => (d, s),
@@ -418,7 +418,7 @@ impl<T> Population for RimPopulation<T> where
 
         // Check distribution and population's vector's sizes are correct
         // length = the number of positions in the rim vectors
-        let length = match distr.len() == out.population[0].len() {
+        let length = match distr.len() == self.population[0].len() {
             true => distr.len(),
             false => return Err(Error::LengthError),
         };
@@ -434,7 +434,7 @@ impl<T> Population for RimPopulation<T> where
         }
 
         // This is where the actual sampling happens
-        (0..out.size).for_each(|out_i| { // For each individual in the population (out_i=index)
+        (0..self.size).for_each(|out_i| { // For each individual in the population (out_i=index)
 
             // Iterate the distribution randomly
             Permutation::<usize>::random(length).permu.iter()
@@ -450,7 +450,7 @@ impl<T> Population for RimPopulation<T> where
                     }
 
                     // Add sampled value to the individual that is being sampled
-                    out.population[out_i].inner[*pos_i] = match T::try_from(i) {
+                    self.population[out_i].inner[*pos_i] = match T::try_from(i) {
                         Ok(v) => v,
                         Err(_) => unreachable!(),
                     };

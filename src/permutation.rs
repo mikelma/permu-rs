@@ -468,11 +468,11 @@ impl<T> Population for PermuPopulation<T> where
     /// 
     /// let mut distr = pop.learn();
     ///
-    /// Population::sample(&mut distr, &mut samples).unwrap();
+    /// samples.sample(&mut distr).unwrap();
     ///
     /// println!("{}", samples);
     /// ```
-    fn sample(distr: &mut Distribution, out: &mut PermuPopulation<T>) -> Result<(), Error> {
+    fn sample(&mut self, distr: &mut Distribution) -> Result<(), Error> {
         
         // Check if the given Distribution is correct
         let (distr, soften) = match distr {
@@ -481,7 +481,7 @@ impl<T> Population for PermuPopulation<T> where
         };
 
         // Check distribution and population's permus' sizes
-        let length = match distr.len() == out.population[0].permu.len() {
+        let length = match distr.len() == self.population[0].permu.len() {
             true => distr.len(),
             false => return Err(Error::LengthError),
         };
@@ -497,7 +497,7 @@ impl<T> Population for PermuPopulation<T> where
         
         // let mut used_indx = Vec::<usize>::with_capacity(length);
 
-        (0..out.size).for_each(|out_i| {
+        (0..self.size).for_each(|out_i| {
             
             // used_indx.clear();
             let mut used_indx = Vec::<usize>::with_capacity(length);
@@ -525,7 +525,7 @@ impl<T> Population for PermuPopulation<T> where
                 }
                 let v = index_f[i];
                 // Never panics, as the boundaries of T are always respected here 
-                out.population[out_i].permu[*ord] = match T::try_from(v) {
+                self.population[out_i].permu[*ord] = match T::try_from(v) {
                     Ok(v) => v,
                     Err(_) => panic!("Conversion error when sampling"),
                 };

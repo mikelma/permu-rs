@@ -22,8 +22,8 @@ pub trait Population {
     /// Returns a `Distribution` learned from the current population.
     fn learn(&self) -> Distribution;
 
-    /// Fills a given `out` population with samples sampled from a given `distr` `Distribution`. 
-    fn sample(distr: &mut Distribution, out: &mut Self) -> Result<(), Error>;
+    /// Fills the current population with samples sampled from a given `Distribution`. 
+    fn sample(&mut self, distr: &mut Distribution) -> Result<(), Error>;
 }
 
 /// Enum for different probability distribution types. 
