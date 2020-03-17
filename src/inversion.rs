@@ -342,7 +342,7 @@ impl<T> InversionPopulation<T> where
     }
 }
 
-impl<T> Population for InversionPopulation<T> where 
+impl<T> Population<T> for InversionPopulation<T> where 
     T : Copy +
     From<u8> +
     TryFrom<usize> +
@@ -471,6 +471,11 @@ impl<T> Population for InversionPopulation<T> where
                     };
                 });
         });
+        Ok(())
+    }
+
+    fn to_permus(&self, permus: &mut PermuPopulation<T>) -> Result<(), Error> {
+        InversionPopulation::to_permus(&self, permus)?;
         Ok(())
     }
 }

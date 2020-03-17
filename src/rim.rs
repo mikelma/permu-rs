@@ -338,7 +338,7 @@ impl<T> RimPopulation<T> where
 
 }
 
-impl<T> Population for RimPopulation<T> where 
+impl<T> Population<T> for RimPopulation<T> where 
     T : Copy +
     From<u8> +
     TryFrom<usize> +
@@ -456,6 +456,11 @@ impl<T> Population for RimPopulation<T> where
                     };
                 });
         });
+        Ok(())
+    }
+
+    fn to_permus(&self, permus: &mut PermuPopulation<T>) -> Result<(), Error> {
+        RimPopulation::to_permus(&self, permus)?;
         Ok(())
     }
 }

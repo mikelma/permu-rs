@@ -17,13 +17,17 @@ pub mod errors;
 use errors::Error;
 
 /// Contains the methods a `Population` should have.
-pub trait Population {
+pub trait Population<T> {
     
     /// Returns a `Distribution` learned from the current population.
     fn learn(&self) -> Distribution;
 
     /// Fills the current population with samples sampled from a given `Distribution`. 
     fn sample(&mut self, distr: &mut Distribution) -> Result<(), Error>;
+    
+    /// Fills the given `PermuPopulation` with the permutation vector 
+    /// representation of the current population 
+    fn to_permus(&self, permus: &mut permutation::PermuPopulation<T>) -> Result<(), Error>;
 }
 
 /// Enum for different probability distribution types. 

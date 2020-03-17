@@ -397,7 +397,7 @@ impl<T> PermuPopulation<T> where
     */
 }
 
-impl<T> Population for PermuPopulation<T> where 
+impl<T> Population<T> for PermuPopulation<T> where 
     T : Copy +
     From<u8> +
     TryFrom<usize> +
@@ -534,6 +534,11 @@ impl<T> Population for PermuPopulation<T> where
         });
         Ok(())
     }        
+    
+    fn to_permus(&self, _permus: &mut PermuPopulation<T>) -> Result<(), Error> {
+        Ok(())
+    }
+
 }
 
 impl<T> fmt::Display for PermuPopulation<T> where 
