@@ -101,14 +101,14 @@ impl ProblemInstance {
     ///     let instance = ProblemInstance::load(&path).unwrap();
     ///     
     ///     let pop = PermuPopulation::<u16>::random(100, instance.size());
-    ///     let mut fitness = vec![0f64; 100];
+    ///     let mut fitness = vec![0; 100];
     ///
     ///     instance.evaluate(&pop, &mut fitness).unwrap();
     /// }
     /// ```
     pub fn evaluate<T>(&self, 
             solutions: &PermuPopulation<T>, 
-            fitness_vec: &mut Vec<f64>) -> Result<(), Error>
+            fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -138,7 +138,7 @@ trait Problem {
     /// Evaluates a given solution (`Permutation`) returning it's fitness value.
     fn evaluate<T>(instace: &ProblemInstance, 
         solutions: &PermuPopulation<T>, 
-        fitness_vec: &mut Vec<f64>) -> Result<(), Error>
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -213,7 +213,7 @@ impl Problem for Qap {
 
     fn evaluate<T>(instace: &ProblemInstance, 
         solutions: &PermuPopulation<T>, 
-        fitness_vec: &mut Vec<f64>) -> Result<(), Error>
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -238,7 +238,7 @@ impl Problem for Qap {
         }
 
         for (index, solution) in solutions.population.iter().enumerate() {
-            let mut fitness = 0f64; 
+            let mut fitness = 0; 
             for i in 0..*size {
                 for j in 0..*size {
 
@@ -254,7 +254,7 @@ impl Problem for Qap {
                     let dist_ab = distance[i][j];
                     let flow_ab = flow[fact_a][fact_b];
 
-                    fitness += (dist_ab*flow_ab) as f64;
+                    fitness += dist_ab*flow_ab;
                 }
             }
             fitness_vec[index] = fitness;
@@ -310,7 +310,7 @@ impl Problem for Pfsp {
 
     fn evaluate<T>(instace: &ProblemInstance, 
         solutions: &PermuPopulation<T>, 
-        fitness_vec: &mut Vec<f64>) -> Result<(), Error>
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -335,7 +335,7 @@ impl Problem for Pfsp {
         }
 
         for (index, solution) in solutions.population.iter().enumerate() {
-            let mut tft = 0f64;
+            let mut tft = 0;
             let mut b = vec![0;*n_machines];  
             for (job_i, job_n) in solution.permu.iter().enumerate() {
                 let mut pt = 0;
@@ -361,7 +361,7 @@ impl Problem for Pfsp {
 
                     b[machine] = pt;
                 }
-                tft += pt as f64;
+                tft += pt;
             }
             fitness_vec[index] = tft;
         }
@@ -395,7 +395,7 @@ impl Problem for Lop {
 
     fn evaluate<T>(instace: &ProblemInstance, 
         solutions: &PermuPopulation<T>, 
-        fitness_vec: &mut Vec<f64>) -> Result<(), Error>
+        fitness_vec: &mut Vec<usize>) -> Result<(), Error>
         where T :
             Copy +
             From<u8> +
@@ -420,7 +420,7 @@ impl Problem for Lop {
         }
         
         for (index, solution) in solutions.population.iter().enumerate() {
-            let mut fitness = 0f64;
+            let mut fitness = 0;
             (0..*size-1).for_each(|i| {
                     (i+1..*size).for_each(|j| {
 
@@ -433,7 +433,7 @@ impl Problem for Lop {
                             Err(_) => unreachable!(),
                         };
 
-                        fitness += matrix[elem1][elem2] as f64;
+                        fitness += matrix[elem1][elem2];
                     });
                 });
             fitness_vec[index] = fitness;
@@ -461,7 +461,7 @@ mod test {
 
         let pop = PermuPopulation::<u8>::random(10, 150);
         let instance = Lop::load(instance_path).unwrap(); 
-        let mut fitness = vec![0f64;10];
+        let mut fitness = vec![0;10];
 
         instance.evaluate(&pop, &mut fitness).unwrap();
         
@@ -485,9 +485,9 @@ mod test {
             vec![12,6,18,16,7,2,5,3,14,0,13,9,15,1,8,10,4,19,17,11]);
         let pop = PermuPopulation::<u8>::from_vec(vec![permu]);
 
-        let mut fitness = vec![0f64];
+        let mut fitness = vec![0];
         instance.evaluate(&pop, &mut fitness).unwrap();
-        assert_eq!(125551590.0, fitness[0]);
+        assert_eq!(125551590, fitness[0]);
     }
 
     #[test]
@@ -508,9 +508,9 @@ mod test {
         permu.clone().invert(&mut permu).unwrap();
         let pop = PermuPopulation::<u8>::from_vec(vec![permu]);
 
-        let mut fitness = vec![0f64];
+        let mut fitness = vec![0];
         instance.evaluate(&pop, &mut fitness).unwrap();
-        assert_eq!(14033.0, fitness[0]);
+        assert_eq!(14033, fitness[0]);
     }
 
     #[test]
@@ -531,7 +531,7 @@ mod test {
             };
             
             let pop = PermuPopulation::<u16>::random(100, instance.size());
-            let mut fitness = vec![0f64; 100];
+            let mut fitness = vec![0; 100];
 
             instance.evaluate(&pop, &mut fitness).unwrap();
         }
