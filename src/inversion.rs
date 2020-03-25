@@ -342,6 +342,7 @@ impl<T> InversionPopulation<T> where
     }
 }
 
+
 impl<T> Population<T> for InversionPopulation<T> where 
     T : Copy +
     From<u8> +

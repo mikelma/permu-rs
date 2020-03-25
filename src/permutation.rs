@@ -7,7 +7,6 @@ use fmt::{Debug, Display};
 use rand::Rng;
 
 use crate::{Population, Distribution, errors::Error };
-// use crate::inversion::{Inversion, InversionPopulation};
 
 /// Contains a permutation vector and methods to generate permutations.
 #[derive(Debug)]

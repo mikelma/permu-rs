@@ -20,7 +20,7 @@ use errors::Error;
 pub trait Population<T> {
 
     // TODO: Document errors
-
+    
     /// Returns a `Distribution` learned from the current population.
     fn learn(&self) -> Distribution;
 
@@ -34,6 +34,7 @@ pub trait Population<T> {
     /// Maps a given `PermuPopulation` into the current `Population`'s representation.
     fn from_permus(&mut self, permus: &permutation::PermuPopulation<T>) -> Result<(), Error>;
 }
+
 /// Enum for different probability distribution types. 
 #[derive(Debug)]
 #[derive(PartialEq)]
@@ -73,4 +74,3 @@ impl fmt::Display for Distribution {
         write!(f, "{}\n{}, soften: {}\n", formatted, distr_type, soften)
     }
 }
-
