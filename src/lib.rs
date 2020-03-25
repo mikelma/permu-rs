@@ -16,8 +16,10 @@ pub mod problems;
 pub mod errors;
 use errors::Error;
 
+use std::fmt::Debug;
+
 /// Contains the methods a `Population` should have.
-pub trait Population<T> {
+pub trait Population<T> : Debug {
 
     // TODO: Document errors
     
