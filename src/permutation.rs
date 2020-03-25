@@ -533,9 +533,9 @@ impl<T> Population<T> for PermuPopulation<T> where
         });
         Ok(())
     }        
-    
-    fn to_permus(&self, _permus: &mut PermuPopulation<T>) -> Result<(), Error> {
-        /*
+
+    // NOTE: This is only a temporary solution, the clone should be avoided
+    fn to_permus(&self, permus: &mut PermuPopulation<T>) -> Result<(), Error> {
         // Check if both populations have yhe same size and length 
         if self.size != permus.size || 
             self.population[0].len() != permus.population[0].len() {
@@ -546,11 +546,19 @@ impl<T> Population<T> for PermuPopulation<T> where
             permus.population[i] = self.population[i].clone();
         }
         Ok(())
-        */
-        Err(Error::IncorrectPopulation)
     }
 
-    fn from_permus(&mut self, _permus: &PermuPopulation<T>) -> Result<(), Error> {
+    // NOTE: This is only a temporary solution, the clone should be avoided
+    fn from_permus(&mut self, permus: &PermuPopulation<T>) -> Result<(), Error> {
+        // Check if both populations have yhe same size and length 
+        if self.size != permus.size || 
+            self.population[0].len() != permus.population[0].len() {
+            return Err(Error::LengthError);
+        }
+        // Clone self to output permutation population
+        for i in 0..self.size {
+            self.population[i] = permus.population[i].clone();
+        }
         Err(Error::IncorrectDistrType)
     }
 
