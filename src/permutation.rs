@@ -394,6 +394,41 @@ impl<T> PermuPopulation<T> where
         Ok(()) 
     } 
     */
+        
+    /// Replaces all individuals from the `PermuPopulation` with its respective inverted
+    /// `PermuPopulation`. For more info, check `Permutation`'s `invert` method.
+    ///
+    /// # Panics 
+    ///
+    /// The function panics if an error occurs when running `invert` method to any `Permutation`of
+    /// the `PermuPopulation`.
+    /// 
+    /// # Example
+    ///
+    /// ```
+    /// use permu_rs::permutation::*;
+    ///
+    /// // Init populations
+    /// let permu = Permutation::<u8>::from_vec(vec![0,2,3,1]).unwrap();
+    /// println!("initial pop: {:?}", permu);
+    /// let mut permu = PermuPopulation::from_vec(vec![permu]); 
+    ///
+    /// let target = Permutation::<u8>::from_vec(vec![0,3,1,2]).unwrap();
+    /// let target = PermuPopulation::from_vec(vec![target]); 
+    ///
+    /// // Calculate the inverted permutation of `permu`
+    /// permu.invert();
+    ///
+    /// println!("inverted pop: {:?}", permu);
+    /// assert_eq!(target, permu);
+    /// ```
+    pub fn invert(&mut self) {
+        self.population.iter_mut()
+            .enumerate()
+            .for_each(|(_index, mut permu)| {
+                permu.clone().invert(&mut permu).unwrap();
+            });
+    }
 }
 
 impl<T> Population<T> for PermuPopulation<T> where 
