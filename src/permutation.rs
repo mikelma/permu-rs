@@ -410,17 +410,17 @@ impl<T> PermuPopulation<T> where
     ///
     /// // Init populations
     /// let permu = Permutation::<u8>::from_vec(vec![0,2,3,1]).unwrap();
-    /// println!("initial pop: {:?}", permu);
-    /// let mut permu = PermuPopulation::from_vec(vec![permu]); 
+    /// let mut pop = PermuPopulation::from_vec(vec![permu]); 
+    /// println!("initial pop: {:?}", pop);
     ///
     /// let target = Permutation::<u8>::from_vec(vec![0,3,1,2]).unwrap();
-    /// let target = PermuPopulation::from_vec(vec![target]); 
+    /// let target_pop = PermuPopulation::from_vec(vec![target]); 
     ///
     /// // Calculate the inverted permutation of `permu`
-    /// permu.invert();
+    /// pop.invert();
     ///
-    /// println!("inverted pop: {:?}", permu);
-    /// assert_eq!(target, permu);
+    /// println!("inverted pop: {:?}", pop);
+    /// assert_eq!(target_pop, pop);
     /// ```
     pub fn invert(&mut self) {
         self.population.iter_mut()
