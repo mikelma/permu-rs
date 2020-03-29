@@ -429,6 +429,69 @@ impl<T> PermuPopulation<T> where
                 permu.clone().invert(&mut permu).unwrap();
             });
     }
+    
+    #[doc(hidden)]
+    fn argsort(vec: &[usize], output: &mut Vec<usize>) {
+        let mut sorted: Vec<(usize, &usize)> = vec.iter().enumerate().collect();
+        sorted.sort_by(|(_i1, e1), (_i2, e2)| e1.cmp(e2) );
+
+        for i in 0..output.len() {
+            let (index, _elem) = sorted[i];
+            output[i] = index;
+        }
+    }
+
+    /// Returns the central perutation of the current `PermuPopulation`. The central permutation is
+    /// calculated with the Borda algorithm.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use permu_rs::permutation::*;
+    ///
+    /// let pop = PermuPopulation::<u8>::from_vec(vec![
+    ///     Permutation::from_vec(vec![0, 1, 2]).unwrap(),
+    ///     Permutation::from_vec(vec![0, 2, 1]).unwrap(),
+    ///     Permutation::from_vec(vec![1, 0, 2]).unwrap(),
+    ///     Permutation::from_vec(vec![1, 2, 0]).unwrap(),
+    ///     Permutation::from_vec(vec![2, 0, 1]).unwrap(),
+    ///     Permutation::from_vec(vec![2, 1, 0]).unwrap(),
+    /// ]);
+    ///
+    /// let target = Permutation::<u8>::from_vec(vec![0, 1, 2]).unwrap();
+    ///
+    /// let central = pop.central_permu();
+    /// assert_eq!(target, central);
+    /// ```
+    pub fn central_permu(&self) -> Permutation<T> {
+        let size = self.population[0].len();
+        let mut sum: Vec<usize> = vec![0; size];
+        // Sum by columns and store result in sum vector
+        self.population.iter()
+            .for_each(|permu| 
+                permu.permu.iter()
+                .enumerate()
+                .for_each(|(index, val)| 
+                    sum[index] += match T::try_into(*val) {
+                        Ok(v) => v,
+                        Err(_) => unreachable!(),
+                    }));
+
+        // Argsort the sum vector to get the central permutation
+        let mut argsorted = vec![0; size];
+        Self::argsort(&sum, &mut argsorted);
+
+        // Convert to T and create the permutation
+        let mut inner = Vec::<T>::with_capacity(size);
+
+        argsorted.iter().
+            for_each(|x| inner.push(match T::try_from(*x) {
+                Ok(v) => v,
+                Err(_) => unreachable!(),
+            }));
+
+        Permutation { permu: inner }
+    }
 }
 
 impl<T> Population<T> for PermuPopulation<T> where 
