@@ -30,7 +30,7 @@ pub trait Population<T> : Debug {
     fn sample(&mut self, distr: &mut Distribution) -> Result<(), Error>;
     
     /// Fills the given `PermuPopulation` with the permutation vector 
-    /// representation of the current population 
+    /// representation of the current population .
     fn to_permus(&self, permus: &mut permutation::PermuPopulation<T>) -> Result<(), Error>;
     
     /// Maps a given `PermuPopulation` into the current `Population`'s representation.
