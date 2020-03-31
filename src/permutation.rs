@@ -168,52 +168,6 @@ impl<T> Permutation<T> where
         })
     }
     
-    /*
-    /// Returns `Result` containing a `Inversion` based on the `Permutation`.
-    ///
-    /// # Error
-    /// See `Inversion::from_permu` Error section.
-    ///
-    /// # Example
-    /// ```
-    /// use permu_rs::inversion::Inversion;
-    /// use permu_rs::permutation::Permutation;
-    ///
-    /// let permu = Permutation::<u8>::from_vec(vec![3,2,1,0]).unwrap(); 
-    /// let ok_inversion: Inversion<u8> = Inversion { inversion : vec![3,2,1]};
-    /// let mut base: Inversion<u8> = Inversion { inversion : vec![0,0,0] };
-    ///
-    /// permu.to_inversion(&mut base);
-    ///
-    /// assert_eq!(ok_inversion, base);
-    /// ```
-    pub fn to_inversion(&self, out: &mut Inversion<T>) -> Result<(), Error> {
-        Inversion::from_permu(&self, out)
-    }
-
-    /// Returns `Result` containing a `Permutation` based on the given `Permutation`.
-    ///
-    /// # Error
-    /// See `Inversion::to:permu` Error section.
-    ///
-    /// # Example
-    /// ```
-    /// use permu_rs::inversion::Inversion;
-    /// use permu_rs::permutation::Permutation;
-    ///
-    /// let inversion : Inversion<u8> = Inversion { inversion : vec![0,0,0] }; // Base Inversion
-    /// let ok_permu = Permutation::<u8>::identity(4); // Expected permutation
-    /// let mut permu = Permutation::<u8>::random(4); // Random permutation 
-    ///
-    /// Permutation::from_inversion(&inversion, &mut permu); // Fill permu based on inversion 
-    ///
-    /// assert_eq!(ok_permu, permu);
-    /// 
-    /// ```
-    pub fn from_inversion(inversion: &Inversion<T>, out: &mut Permutation<T>) -> Result<(), Error> {
-        Inversion::to_permu(&inversion,out)
-    }
-    */
     
     /// Fills a given output `Permutation` with the inverted permutation of the current
     /// permutation. inverted(permutation) = permutation^(-1).
