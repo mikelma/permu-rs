@@ -244,9 +244,8 @@ impl<T> Permutation<T> where
     /// let mut result2 = result.clone();
     /// result.compose_with(&aux, &mut result2).unwrap();
     /// assert_eq!(permu, result2);
-    ///
     /// ```
-    pub fn compose_with(&mut self, other: &Permutation<T>, 
+    pub fn compose_with(&self, other: &Permutation<T>, 
         result: &mut Permutation<T>) -> Result<(), Error> {
         // Check lengths
         if self.len() != other.len() && other.len() == result.len() {
@@ -255,7 +254,7 @@ impl<T> Permutation<T> where
 
         self.permu.iter()
             .zip(other.permu.iter())
-            .for_each(|(index, elem)| {
+            .for_each(|(elem, index)| {
                 let i = match T::try_into(*index) {
                     Ok(v) => v,
                     Err(_) => unreachable!(),
