@@ -168,7 +168,6 @@ impl<T> Permutation<T> where
         })
     }
     
-    
     /// Fills a given output `Permutation` with the inverted permutation of the current
     /// permutation. inverted(permutation) = permutation^(-1).
     ///
@@ -217,6 +216,52 @@ impl<T> Permutation<T> where
                 unreachable!();
             }
         });
+        Ok(())
+    }
+    
+    /// Composes the current `Permutation` with a given permutation with the given one.  
+    /// In other words: `result = permu[other]`.
+    ///
+    // # Error
+    // # TODO
+    ///
+    /// # Example 
+    /// ```
+    /// use permu_rs::permutation::Permutation;
+    ///
+    /// let mut permu = Permutation::<u8>::random(4);
+    /// let identity = Permutation::<u8>::identity(4);
+    /// let mut result = Permutation::<u8>::random(4);
+    /// let other = Permutation::<u8>::random(4);
+    ///
+    /// permu.compose_with(&identity, &mut result).unwrap();
+    /// assert_eq!(permu, result);
+    ///
+    /// permu.compose_with(&other, &mut result).unwrap();
+    /// let mut aux = other.clone();
+    /// other.invert(&mut aux);
+    ///
+    /// let mut result2 = result.clone();
+    /// result.compose_with(&aux, &mut result2).unwrap();
+    /// assert_eq!(permu, result2);
+    ///
+    /// ```
+    pub fn compose_with(&mut self, other: &Permutation<T>, 
+        result: &mut Permutation<T>) -> Result<(), Error> {
+        // Check lengths
+        if self.len() != other.len() && other.len() == result.len() {
+            return Err(Error::LengthError); 
+        }
+
+        self.permu.iter()
+            .zip(other.permu.iter())
+            .for_each(|(index, elem)| {
+                let i = match T::try_into(*index) {
+                    Ok(v) => v,
+                    Err(_) => unreachable!(),
+                };
+                result.permu[i] = *elem;
+            });
         Ok(())
     }
 }
